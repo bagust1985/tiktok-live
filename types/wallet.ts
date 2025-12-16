@@ -16,12 +16,12 @@ export interface Wallet {
   id: string;
   user_id: string;
   
-  // Locked Balances (cair setelah 90 hari)
+  // Locked Balances (cair setelah 30 hari)
   balance_deposit: number; // Modal awal
   balance_reward_task: number; // Gaji harian dari task
   balance_matching_lock: number; // Bonus matching dari downline
   
-  unlock_date: Date | null; // Tanggal jatuh tempo (H+90)
+  unlock_date: Date | null; // Tanggal jatuh tempo (H+30)
   
   // Available Balance (cair kapan saja)
   balance_available: number; // Bonus sponsor & pairing

@@ -60,9 +60,9 @@ export default function DepositPage() {
                     <span className="font-medium">{formatIDR(tier.dailyIncome)}</span>
                   </div>
                   <div className="flex justify-between border-t pt-2 mt-2">
-                    <span className="text-muted-foreground">Total (90 Hari):</span>
+                    <span className="text-muted-foreground">Total (30 Hari):</span>
                     <span className="font-bold text-primary">
-                      {formatIDR(tier.totalIncome90Days)}
+                      {formatIDR(tier.totalIncome30Days)}
                     </span>
                   </div>
                 </div>
@@ -92,10 +92,10 @@ export default function DepositPage() {
         </CardHeader>
         <CardContent className="text-blue-800 dark:text-blue-200">
           <p className="mb-2">
-            Deposit dan reward dari task akan dikunci selama <strong>90 hari</strong>.
+            Deposit dan reward dari task akan dikunci selama <strong>30 hari</strong>.
           </p>
           <p>
-            Setelah 90 hari, saldo akan otomatis masuk ke Available Balance dan bisa ditarik kapan saja.
+            Setelah 30 hari, saldo akan otomatis masuk ke Available Balance dan bisa ditarik kapan saja.
           </p>
         </CardContent>
       </Card>

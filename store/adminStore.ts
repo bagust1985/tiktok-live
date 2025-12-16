@@ -31,7 +31,8 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   logout: () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("admin-user");
-      localStorage.removeItem("auth-token");
+      localStorage.removeItem("admin-token"); // Changed: admin-token instead of auth-token
+      // Don't remove auth-token or auth-user (those are for regular users)
     }
     set({ admin: null, isAuthenticated: false, stats: null });
   },
@@ -39,10 +40,10 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     if (typeof window === "undefined") return;
     
     try {
-      // Check if there's a token first
-      const token = localStorage.getItem("auth-token");
+      // Check if there's an admin token first (separate from user token)
+      const token = localStorage.getItem("admin-token"); // Changed: admin-token instead of auth-token
       if (!token) {
-        // No token, clear admin
+        // No admin token, clear admin data
         localStorage.removeItem("admin-user");
         set({ admin: null, isAuthenticated: false });
         return;
@@ -58,28 +59,19 @@ export const useAdminStore = create<AdminState>((set, get) => ({
           }
           // Not admin, clear
           localStorage.removeItem("admin-user");
+          localStorage.removeItem("admin-token"); // Clear admin-token too
           set({ admin: null, isAuthenticated: false });
         } catch (e) {
           console.error("Error parsing admin-user:", e);
           localStorage.removeItem("admin-user");
+          localStorage.removeItem("admin-token"); // Clear admin-token too
           set({ admin: null, isAuthenticated: false });
         }
       } else {
-        // No admin-user stored, check auth-user (in case user just logged in)
-        const authUser = localStorage.getItem("auth-user");
-        if (authUser) {
-          try {
-            const user = JSON.parse(authUser);
-            if (user && user.is_admin) {
-              // This is admin, sync to admin store
-              set({ admin: user, isAuthenticated: true });
-              localStorage.setItem("admin-user", authUser);
-            }
-          } catch (e) {
-            // Invalid, ignore
-            console.error("Error parsing auth-user:", e);
-          }
-        }
+        // No admin-user stored, token exists but no user data
+        // This shouldn't happen in normal flow, but clear token for safety
+        localStorage.removeItem("admin-token");
+        set({ admin: null, isAuthenticated: false });
       }
     } catch (error) {
       console.error("Error in initFromStorage:", error);

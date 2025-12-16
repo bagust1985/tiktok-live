@@ -2,7 +2,8 @@ import { Elysia } from "elysia";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 
-export default new Elysia().get("/avatars/:filename", async ({ params, set }) => {
+// Helper function to serve image files
+const serveImageFile = async (params: { filename: string }, folder: string, set: any) => {
   try {
     const { filename } = params;
 
@@ -15,7 +16,7 @@ export default new Elysia().get("/avatars/:filename", async ({ params, set }) =>
       };
     }
 
-    const filePath = join(process.cwd(), "public", "uploads", "avatars", filename);
+    const filePath = join(process.cwd(), "public", "uploads", folder, filename);
 
     // Check if file exists
     if (!existsSync(filePath)) {
@@ -35,6 +36,7 @@ export default new Elysia().get("/avatars/:filename", async ({ params, set }) =>
     if (extension === "png") contentType = "image/png";
     if (extension === "gif") contentType = "image/gif";
     if (extension === "webp") contentType = "image/webp";
+    if (extension === "jpg" || extension === "jpeg") contentType = "image/jpeg";
 
     // Return file with proper headers
     return new Response(file, {
@@ -51,5 +53,13 @@ export default new Elysia().get("/avatars/:filename", async ({ params, set }) =>
       message: "Terjadi kesalahan",
     };
   }
-});
+};
+
+export default new Elysia()
+  .get("/avatars/:filename", async ({ params, set }) => {
+    return serveImageFile(params, "avatars", set);
+  })
+  .get("/proofs/:filename", async ({ params, set }) => {
+    return serveImageFile(params, "proofs", set);
+  });
 

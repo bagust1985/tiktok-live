@@ -54,12 +54,12 @@ model Wallet {
   user_id         String   @unique
   user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   
-  // -- KATEGORI LOCKED (Cair setelah 3 Bulan) --
+  // -- KATEGORI LOCKED (Cair setelah 1 Bulan) --
   balance_deposit      Decimal  @default(0) // Modal Awal
   balance_reward_task  Decimal  @default(0) // Gaji Harian
   balance_matching_lock Decimal @default(0) // Bonus Matching dr Downline
   
-  unlock_date          DateTime? // Tanggal Jatuh Tempo (H+90)
+  unlock_date          DateTime? // Tanggal Jatuh Tempo (H+30)
   
   // -- KATEGORI AVAILABLE (Cair Kapan Saja) --
   balance_available    Decimal  @default(0) // Bonus Sponsor & Pairing

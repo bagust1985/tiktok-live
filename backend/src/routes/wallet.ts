@@ -1,6 +1,8 @@
 import { Elysia } from "elysia";
 import { authMiddleware } from "../middleware/auth";
 import { MEMBERSHIP_TIERS, LOCK_PERIOD_DAYS } from "../constants";
+import { existsSync, mkdirSync } from "fs";
+import { join } from "path";
 
 const MIN_WITHDRAW_AMOUNT = 50000;
 
@@ -39,7 +41,15 @@ export default new Elysia()
       };
     }
   })
-  .post("/deposit", async ({ userId, body, db, set }) => {
+  .post("/deposit", async ({ userId, body, db, set, error: errorFn }) => {
+    // Guard: Check if userId exists (from auth middleware)
+    if (!userId) {
+      return errorFn(401, {
+        success: false,
+        message: "Unauthorized - Invalid or missing token",
+      });
+    }
+
     try {
       const { tier_level, amount, proof_image, notes } = body as any;
 
@@ -83,14 +93,43 @@ export default new Elysia()
         };
       }
 
-      // Handle file upload (proof_image is base64 string in this case)
-      // In production, use proper file upload handling or cloud storage
+      // Handle file upload (proof_image is base64 string)
+      // Decode base64 and save to file system
       let proofImageUrl: string | null = null;
-      if (proof_image && typeof proof_image === 'string') {
-        // Store base64 reference or decode and save to file system
-        // For now, just store as reference
-        proofImageUrl = proof_image.substring(0, 100) + '...'; // Truncated for storage
-        // In production: decode base64 and save to cloud storage (S3, etc)
+      if (proof_image && typeof proof_image === 'string' && proof_image.startsWith('data:image')) {
+        try {
+          // Ensure uploads directory exists
+          const uploadsDir = join(process.cwd(), "public", "uploads", "proofs");
+          if (!existsSync(uploadsDir)) {
+            mkdirSync(uploadsDir, { recursive: true });
+          }
+
+          // Extract base64 data and determine file extension
+          const matches = proof_image.match(/^data:image\/(\w+);base64,(.+)$/);
+          if (matches && matches.length === 3) {
+            const imageType = matches[1]; // png, jpeg, jpg, etc
+            const base64Data = matches[2];
+            
+            // Convert base64 to Buffer
+            const buffer = Buffer.from(base64Data, 'base64');
+            
+            // Generate unique filename
+            const timestamp = Date.now();
+            const extension = imageType === 'jpeg' ? 'jpg' : imageType;
+            const fileName = `proof-${userId}-${timestamp}.${extension}`;
+            const filePath = join(uploadsDir, fileName);
+            
+            // Save file
+            await Bun.write(filePath, buffer);
+            
+            // Store relative path for database
+            proofImageUrl = `/uploads/proofs/${fileName}`;
+          }
+        } catch (error: any) {
+          console.error("Error saving proof image:", error);
+          // If error saving file, still continue with transaction but without image
+          proofImageUrl = null;
+        }
       }
 
       // Create transaction with PENDING status

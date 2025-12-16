@@ -41,7 +41,7 @@ export default function TaskProgress({
           </span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Reward akan masuk ke saldo locked dan dapat ditarik setelah 90 hari
+          Reward akan masuk ke saldo locked dan dapat ditarik setelah 30 hari
         </p>
       </CardContent>
     </Card>

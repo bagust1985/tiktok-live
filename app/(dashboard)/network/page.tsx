@@ -167,7 +167,7 @@ export default function NetworkPage() {
               <CardHeader>
                 <CardTitle>Bonus Matching</CardTitle>
                 <CardDescription>
-                  Sharing profit dari hasil task downline (Locked 90 hari)
+                  Sharing profit dari hasil task downline (Locked 30 hari)
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

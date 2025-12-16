@@ -90,7 +90,7 @@ export default function WalletPage() {
           description={
             wallet?.unlock_date
               ? `Unlock: ${new Date(wallet.unlock_date).toLocaleDateString("id-ID")}`
-              : "Terkunci selama 90 hari"
+              : "Terkunci selama 30 hari"
           }
           variant="locked"
         />

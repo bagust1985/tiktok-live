@@ -4,21 +4,35 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
 
-// Helper to get auth token
+// Helper to get admin auth token (separate from user token)
 function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('auth-token');
+  return localStorage.getItem('admin-token');
+}
+
+// Helper to set admin auth token
+function setAdminToken(token: string) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('admin-token', token);
+  }
+}
+
+// Helper to remove admin auth token
+export function removeAdminToken() {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('admin-token');
+  }
 }
 
 // Helper to handle API response and check for 401 errors
 async function handleApiResponse<T>(response: Response): Promise<T> {
-  // If 401 Unauthorized, logout user and redirect to login
+  // If 401 Unauthorized, logout admin and redirect to login
   if (response.status === 401) {
-    // Clear auth data
+    // Clear admin auth data only (don't touch user auth data)
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth-token');
+      localStorage.removeItem('admin-token');
       localStorage.removeItem('admin-user');
-      localStorage.removeItem('auth-user');
+      // Don't remove auth-token or auth-user (those are for regular users)
       // Only redirect if not already on login page
       if (!window.location.pathname.includes('/admin/login')) {
         window.location.href = '/admin/login';

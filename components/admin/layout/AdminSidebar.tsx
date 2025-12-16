@@ -48,12 +48,7 @@ export default function AdminSidebar() {
   const { logout } = useAdminStore();
 
   const handleLogout = () => {
-    logout();
-    // Clear both admin and user data on logout
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("auth-user");
-      localStorage.removeItem("auth-token");
-    }
+    logout(); // This will handle remove admin-token and admin-user (no need to manually clear)
     router.push("/admin/login");
   };
 

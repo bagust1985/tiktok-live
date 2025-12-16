@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+
 export default function TransactionDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -250,12 +252,28 @@ export default function TransactionDetailPage() {
             <CardTitle>Proof of Payment</CardTitle>
           </CardHeader>
           <CardContent>
-              {transaction.proof_image_url && transaction.proof_image_url.includes('data:image') ? (
+            {transaction.proof_image_url.startsWith('data:image') ? (
+              // Base64 image (old format, fallback)
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={transaction.proof_image_url}
                 alt="Proof of payment"
                 className="max-w-md rounded-lg border"
+              />
+            ) : transaction.proof_image_url.startsWith('/uploads/proofs/') ? (
+              // File path - load from backend
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`${API_BASE_URL}${transaction.proof_image_url}`}
+                alt="Proof of payment"
+                className="max-w-md rounded-lg border"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                  const parent = (e.target as HTMLImageElement).parentElement;
+                  if (parent) {
+                    parent.innerHTML = '<p class="text-muted-foreground">Proof image tidak dapat dimuat</p>';
+                  }
+                }}
               />
             ) : (
               <p className="text-muted-foreground">Proof image tidak tersedia</p>

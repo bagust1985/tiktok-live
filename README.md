@@ -238,7 +238,7 @@ backend/
 
 #### Wallet Management
 - **Balance Types**:
-  - `balance_deposit`: Deposit yang dikunci 90 hari
+  - `balance_deposit`: Deposit yang dikunci 30 hari
   - `balance_reward_task`: Reward dari task
   - `balance_matching_lock`: Matching bonus yang dikunci
   - `balance_available`: Saldo yang bisa di-withdraw
@@ -384,7 +384,7 @@ Buat user baru melalui halaman register di frontend.
 - **Level 2**: Deposit Rp 1.000.000, Reward Rp 2.500/task
 - **Level 1**: Deposit Rp 5.000.000, Reward Rp 12.500/task
 
-All tiers: Max 20 tasks/day, Lock period 90 days
+All tiers: Max 20 tasks/day, Lock period 30 days
 
 ## Currency Formatting
 
@@ -408,7 +408,7 @@ All amounts are displayed in IDR (Rupiah) format:
 - Deposit menggunakan **IDR via bank transfer** (bukan crypto)
 - User transfer ke salah satu rekening perusahaan yang aktif
 - Upload bukti transfer → admin review → approve → update saldo & aktivasi user
-- Lock period: **90 hari** untuk deposit
+- Lock period: **30 hari** untuk deposit
 
 ### Withdraw System
 - Minimal withdraw: **Rp 50.000**

@@ -39,7 +39,15 @@ export default function AdminLoginPage() {
       if (response.success && response.user) {
         // Check if user is admin
         if (response.user.is_admin) {
-          // Only set admin store, don't interfere with regular auth store
+          // Store admin token separately (admin-token instead of auth-token)
+          // This prevents user logout from affecting admin session
+          if (response.token && typeof window !== 'undefined') {
+            localStorage.setItem('admin-token', response.token);
+            // Remove auth-token that was set by login() function
+            localStorage.removeItem('auth-token');
+            // Don't store in auth-user, only admin-user
+            localStorage.removeItem('auth-user');
+          }
           setAdmin(response.user);
           toast({
             title: "Login Berhasil",
@@ -48,7 +56,10 @@ export default function AdminLoginPage() {
           router.push("/admin/dashboard");
         } else {
           // Clear token if not admin
-          localStorage.removeItem("auth-token");
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem("auth-token");
+            localStorage.removeItem("auth-user");
+          }
           toast({
             title: "Akses Ditolak",
             description: "Anda bukan admin. Hanya admin yang bisa akses.",

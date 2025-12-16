@@ -95,15 +95,15 @@ export default function AgreementModal({ onAgree, onCancel }: AgreementModalProp
             </p>
             <ul className="list-disc pl-5 space-y-1">
               <li>
-                Setiap Deposit modal yang masuk akan DIKUNCI (LOCKED) selama 90
-                HARI (3 Bulan).
+                Setiap Deposit modal yang masuk akan DIKUNCI (LOCKED) selama 30
+                HARI (1 Bulan).
               </li>
               <li>
                 Selama masa kunci, modal TIDAK BISA DITARIK dengan alasan
                 apapun.
               </li>
               <li>
-                Dana baru bisa ditarik (Withdraw) setelah masa kontrak 90 hari
+                Dana baru bisa ditarik (Withdraw) setelah masa kontrak 30 hari
                 selesai.
               </li>
             </ul>
@@ -119,7 +119,7 @@ export default function AgreementModal({ onAgree, onCancel }: AgreementModalProp
               </li>
               <li>
                 Hasil profit harian (Reward) juga berstatus LOCKED dan baru bisa
-                ditarik bersamaan dengan modal setelah 90 hari.
+                ditarik bersamaan dengan modal setelah 30 hari.
               </li>
               <li>
                 Platform berhak membatalkan reward jika terindikasi kecurangan
@@ -158,7 +158,7 @@ export default function AgreementModal({ onAgree, onCancel }: AgreementModalProp
             <p className="font-bold text-gray-900 mb-4">
               DENGAN MENEKAN TOMBOL "SETUJU", SAYA MENYATAKAN BAHWA SAYA DALAM
               KEADAAN SADAR, TIDAK ADA PAKSAAN, DAN MENGERTI BAHWA DANA SAYA AKAN
-              DITAHAN SELAMA 90 HARI.
+              DITAHAN SELAMA 30 HARI.
             </p>
 
             {/* KODE YANG DIMINTA */}

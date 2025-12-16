@@ -1,26 +1,24 @@
 import type { Elysia } from "elysia";
 
 export const adminMiddleware = (app: Elysia) =>
-  app.derive(async ({ headers, jwt, db, set }) => {
+  app.derive(async ({ headers, jwt, db, error }) => {
     const authorization = headers.authorization;
 
     if (!authorization || !authorization.startsWith("Bearer ")) {
-      set.status = 401;
-      return {
+      return error(401, {
         success: false,
         message: "Unauthorized - Token required",
-      };
+      });
     }
 
     const token = authorization.substring(7);
     const payload = await jwt.verify(token);
 
     if (!payload || !payload.userId) {
-      set.status = 401;
-      return {
+      return error(401, {
         success: false,
         message: "Unauthorized - Invalid token",
-      };
+      });
     }
 
     // Check if user is admin
@@ -30,15 +28,15 @@ export const adminMiddleware = (app: Elysia) =>
     });
 
     if (!user || !user.is_admin) {
-      set.status = 403;
-      return {
+      return error(403, {
         success: false,
         message: "Forbidden - Admin access required",
-      };
+      });
     }
 
     return {
       adminId: payload.userId as string,
+      userId: payload.userId as string, // Also provide userId for consistency
     };
   });
 
