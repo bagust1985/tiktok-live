@@ -19,8 +19,9 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import { Eye } from "lucide-react";
+import SuperAdminRoute from "@/components/admin/layout/SuperAdminRoute";
 
-export default function AdminUsersPage() {
+function AdminUsersContent() {
   const { toast } = useToast();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -240,6 +241,14 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <SuperAdminRoute>
+      <AdminUsersContent />
+    </SuperAdminRoute>
   );
 }
 

@@ -11,6 +11,7 @@ interface AdminState {
   setStats: (stats: any) => void;
   logout: () => void;
   initFromStorage: () => void;
+  isSuperAdmin: () => boolean;
 }
 
 export const useAdminStore = create<AdminState>((set, get) => ({
@@ -77,6 +78,10 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       console.error("Error in initFromStorage:", error);
       set({ admin: null, isAuthenticated: false });
     }
+  },
+  isSuperAdmin: () => {
+    const { admin } = get();
+    return admin?.is_admin === true && admin?.admin_role === "SUPER_ADMIN";
   },
 }));
 

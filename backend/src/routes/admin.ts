@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { adminMiddleware } from "../middleware/admin";
+import { superAdminMiddleware } from "../middleware/super-admin";
 import { MEMBERSHIP_TIERS, LOCK_PERIOD_DAYS } from "../constants";
 
 export default new Elysia()
@@ -397,8 +398,12 @@ export default new Elysia()
       };
     }
   })
-  // Get all users
-  .get("/users", async ({ query, db, set }) => {
+  // ===== SUPER ADMIN ONLY ROUTES =====
+  .group("/users", (app) =>
+    app
+      .use(superAdminMiddleware)
+      // Get all users
+      .get("/", async ({ query, db, set }) => {
     try {
       const search = (query as any).search;
       const tier_level = (query as any).tier_level;
@@ -726,8 +731,8 @@ export default new Elysia()
       };
     }
   })
-  // User Actions - Ban/Unban
-  .put("/users/:id/ban", async ({ params, body, db, set }) => {
+      // User Actions - Ban/Unban
+      .put("/:id/ban", async ({ params, body, db, set }) => {
     try {
       const { banned } = body as any;
 
@@ -741,7 +746,7 @@ export default new Elysia()
 
       return {
         success: true,
-        message: banned ? "User berhasil di-unban" : "User berhasil di-ban",
+        message: banned ? "User berhasil di-ban" : "User berhasil di-unban",
         data: userWithoutPassword,
       };
     } catch (error: any) {
@@ -753,8 +758,8 @@ export default new Elysia()
       };
     }
   })
-  // User Actions - Reset Password
-  .put("/users/:id/reset-password", async ({ params, db, set }) => {
+      // User Actions - Reset Password
+      .put("/:id/reset-password", async ({ params, db, set }) => {
     try {
       // Generate random password (8 characters)
       const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
@@ -789,8 +794,8 @@ export default new Elysia()
       };
     }
   })
-  // Network Viewer - Get user network tree
-  .get("/users/:id/network", async ({ params, db, set }) => {
+      // Network Viewer - Get user network tree
+      .get("/:id/network", async ({ params, db, set }) => {
     try {
       const user = await db.user.findUnique({
         where: { id: params.id },
@@ -859,9 +864,14 @@ export default new Elysia()
         message: "Terjadi kesalahan",
       };
     }
-  })
-  // Company Bank Management
-  .get("/banks", async ({ db, set }) => {
+      })
+  )
+  // ===== SETTINGS (SUPER ADMIN ONLY) =====
+  .group("/banks", (app) =>
+    app
+      .use(superAdminMiddleware)
+      // Company Bank Management
+      .get("/", async ({ db, set }) => {
     try {
       const banks = await db.companyBank.findMany({
         orderBy: { created_at: "asc" },
@@ -880,7 +890,7 @@ export default new Elysia()
       };
     }
   })
-  .post("/banks", async ({ db, body, set }) => {
+      .post("/", async ({ db, body, set }) => {
     try {
       const { bank_name, account_number, account_holder, is_active } = body as any;
 
@@ -907,7 +917,7 @@ export default new Elysia()
       };
     }
   })
-  .put("/banks/:id", async ({ params, db, body, set }) => {
+      .put("/:id", async ({ params, db, body, set }) => {
     try {
       const { bank_name, account_number, account_holder, is_active } = body as any;
 
@@ -936,7 +946,7 @@ export default new Elysia()
       };
     }
   })
-  .put("/banks/:id/toggle", async ({ params, db, set }) => {
+      .put("/:id/toggle", async ({ params, db, set }) => {
     try {
       const bank = await db.companyBank.findUnique({
         where: { id: parseInt(params.id) },
@@ -969,7 +979,7 @@ export default new Elysia()
       };
     }
   })
-  .delete("/banks/:id", async ({ params, db, set }) => {
+      .delete("/:id", async ({ params, db, set }) => {
     try {
       await db.companyBank.delete({
         where: { id: parseInt(params.id) },
@@ -987,9 +997,13 @@ export default new Elysia()
         message: "Terjadi kesalahan",
       };
     }
-  })
-  // Contact Center Management
-  .get("/contacts", async ({ db, set }) => {
+      })
+  )
+  .group("/contacts", (app) =>
+    app
+      .use(superAdminMiddleware)
+      // Contact Center Management
+      .get("/", async ({ db, set }) => {
     try {
       const contacts = await db.contactCenter.findMany({
         orderBy: { sequence: "asc" },
@@ -1008,7 +1022,7 @@ export default new Elysia()
       };
     }
   })
-  .post("/contacts", async ({ db, body, set }) => {
+      .post("/", async ({ db, body, set }) => {
     try {
       const { title, number, type, sequence, is_active } = body as any;
 
@@ -1036,7 +1050,7 @@ export default new Elysia()
       };
     }
   })
-  .put("/contacts/:id", async ({ params, db, body, set }) => {
+      .put("/:id", async ({ params, db, body, set }) => {
     try {
       const { title, number, type, sequence, is_active } = body as any;
 
@@ -1066,7 +1080,7 @@ export default new Elysia()
       };
     }
   })
-  .put("/contacts/:id/toggle", async ({ params, db, set }) => {
+      .put("/:id/toggle", async ({ params, db, set }) => {
     try {
       const contact = await db.contactCenter.findUnique({
         where: { id: parseInt(params.id) },
@@ -1099,7 +1113,7 @@ export default new Elysia()
       };
     }
   })
-  .delete("/contacts/:id", async ({ params, db, set }) => {
+      .delete("/:id", async ({ params, db, set }) => {
     try {
       await db.contactCenter.delete({
         where: { id: parseInt(params.id) },
@@ -1117,9 +1131,13 @@ export default new Elysia()
         message: "Terjadi kesalahan",
       };
     }
-  })
-  // Task Management - Get all tasks
-  .get("/tasks", async ({ db, set }) => {
+      })
+  )
+  .group("/tasks", (app) =>
+    app
+      .use(superAdminMiddleware)
+      // Task Management - Get all tasks
+      .get("/", async ({ db, set }) => {
     try {
       const tasks = await db.taskConfig.findMany({
         orderBy: { sequence: "asc" },
@@ -1138,8 +1156,8 @@ export default new Elysia()
       };
     }
   })
-  // Task Management - Get task by id
-  .get("/tasks/:id", async ({ params, db, set }) => {
+      // Task Management - Get task by id
+      .get("/:id", async ({ params, db, set }) => {
     try {
       const task = await db.taskConfig.findUnique({
         where: { id: parseInt(params.id) },
@@ -1205,8 +1223,8 @@ export default new Elysia()
       };
     }
   })
-  // Task Management - Update task
-  .put("/tasks/:id", async ({ params, body, db, set }) => {
+      // Task Management - Update task
+      .put("/:id", async ({ params, body, db, set }) => {
     try {
       const { title, description, target_url, icon_url, is_active } = body as any;
 
@@ -1235,5 +1253,202 @@ export default new Elysia()
         message: "Terjadi kesalahan",
       };
     }
-  });
+      })
+  )
+  // ===== ADMIN MANAGEMENT (SUPER ADMIN ONLY) =====
+  .group("/admins", (app) =>
+    app
+      .use(superAdminMiddleware)
+      // List all admins
+      .get("/", async ({ db, set }) => {
+        try {
+          const admins = await db.user.findMany({
+            where: { is_admin: true },
+            select: {
+              id: true,
+              username: true,
+              email: true,
+              is_admin: true,
+              admin_role: true,
+              created_at: true,
+            },
+            orderBy: { created_at: "desc" },
+          });
+
+          return {
+            success: true,
+            data: admins,
+          };
+        } catch (error: any) {
+          console.error("Get admins error:", error);
+          set.status = 500;
+          return {
+            success: false,
+            message: "Terjadi kesalahan",
+          };
+        }
+      })
+      // Create new admin
+      .post("/", async ({ body, db, set }) => {
+        try {
+          const { email, password, admin_role } = body as any;
+
+          // Validate input
+          if (!email || !password) {
+            set.status = 400;
+            return {
+              success: false,
+              message: "Email dan password wajib diisi",
+            };
+          }
+
+          if (password.length < 6) {
+            set.status = 400;
+            return {
+              success: false,
+              message: "Password minimal 6 karakter",
+            };
+          }
+
+          if (admin_role && !["SUPER_ADMIN", "ADMIN"].includes(admin_role)) {
+            set.status = 400;
+            return {
+              success: false,
+              message: "Role harus SUPER_ADMIN atau ADMIN",
+            };
+          }
+
+          // Check if email already exists
+          const existingUser = await db.user.findUnique({
+            where: { email },
+          });
+
+          if (existingUser) {
+            set.status = 400;
+            return {
+              success: false,
+              message: "Email sudah terdaftar",
+            };
+          }
+
+          // Generate username from email
+          const username = email.split("@")[0];
+
+          // Hash password
+          const hashedPassword = await Bun.password.hash(password, {
+            algorithm: "argon2id",
+          });
+
+          // Create admin user
+          const admin = await db.user.create({
+            data: {
+              username,
+              email,
+              password: hashedPassword,
+              is_admin: true,
+              admin_role: admin_role || "ADMIN",
+              is_active: true,
+              tier_level: 0,
+            },
+            select: {
+              id: true,
+              username: true,
+              email: true,
+              is_admin: true,
+              admin_role: true,
+              created_at: true,
+            },
+          });
+
+          // Create wallet for admin (required by schema)
+          await db.wallet.create({
+            data: {
+              user_id: admin.id,
+            },
+          });
+
+          return {
+            success: true,
+            message: "Admin berhasil dibuat",
+            data: admin,
+          };
+        } catch (error: any) {
+          console.error("Create admin error:", error);
+          set.status = 500;
+          return {
+            success: false,
+            message: "Terjadi kesalahan",
+          };
+        }
+      })
+      // Update admin role
+      .put("/:id", async ({ params, body, db, set }) => {
+        try {
+          const { admin_role } = body as any;
+
+          if (!admin_role || !["SUPER_ADMIN", "ADMIN"].includes(admin_role)) {
+            set.status = 400;
+            return {
+              success: false,
+              message: "Role harus SUPER_ADMIN atau ADMIN",
+            };
+          }
+
+          const admin = await db.user.update({
+            where: { id: params.id },
+            data: { admin_role },
+            select: {
+              id: true,
+              username: true,
+              email: true,
+              is_admin: true,
+              admin_role: true,
+              created_at: true,
+            },
+          });
+
+          return {
+            success: true,
+            message: "Role admin berhasil diupdate",
+            data: admin,
+          };
+        } catch (error: any) {
+          console.error("Update admin error:", error);
+          set.status = 500;
+          return {
+            success: false,
+            message: "Terjadi kesalahan",
+          };
+        }
+      })
+      // Delete admin
+      .delete("/:id", async ({ params, db, set, adminId }) => {
+        try {
+          // Prevent deleting self
+          if (params.id === adminId) {
+            set.status = 400;
+            return {
+              success: false,
+              message: "Tidak dapat menghapus akun sendiri",
+            };
+          }
+
+          await db.user.delete({
+            where: { id: params.id },
+          });
+
+          return {
+            success: true,
+            message: "Admin berhasil dihapus",
+          };
+        } catch (error: any) {
+          console.error("Delete admin error:", error);
+          set.status = 500;
+          return {
+            success: false,
+            message: "Terjadi kesalahan",
+          };
+        }
+      })
+  );
 

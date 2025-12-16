@@ -28,6 +28,7 @@ model User {
   tier_level      Int      @default(0) // 0:Free, 1:Lvl3, 2:Lvl2, 3:Lvl1
   is_active       Boolean  @default(false)
   is_admin        Boolean  @default(false) // Admin role
+  admin_role      String?  // 'SUPER_ADMIN' or 'ADMIN'
   
   // -- RELASI JARINGAN --
   sponsor_id      String?  // Upline Sponsor (Unilevel)

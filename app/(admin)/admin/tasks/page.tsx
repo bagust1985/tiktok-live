@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { Edit, Play, CheckCircle2, XCircle } from "lucide-react";
+import SuperAdminRoute from "@/components/admin/layout/SuperAdminRoute";
 
-export default function TasksPage() {
+function TasksContent() {
   const router = useRouter();
   const { toast } = useToast();
   const [tasks, setTasks] = useState<any[]>([]);
@@ -170,6 +171,14 @@ export default function TasksPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function TasksPage() {
+  return (
+    <SuperAdminRoute>
+      <TasksContent />
+    </SuperAdminRoute>
   );
 }
 

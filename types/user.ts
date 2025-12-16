@@ -8,6 +8,8 @@ import type { NetworkStats } from './index';
 export type TierLevel = 0 | 1 | 2 | 3; // 0 = Free, 1-3 = Paid tiers
 export type BinaryPosition = 'LEFT' | 'RIGHT' | null;
 
+export type AdminRole = 'SUPER_ADMIN' | 'ADMIN';
+
 export interface User {
   id: string;
   username: string;
@@ -15,6 +17,7 @@ export interface User {
   tier_level: TierLevel;
   is_active: boolean;
   is_admin?: boolean;
+  admin_role?: AdminRole | null;
   full_name?: string | null;
   avatar_url?: string | null;
   phone?: string | null;

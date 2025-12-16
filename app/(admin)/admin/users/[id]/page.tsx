@@ -172,11 +172,14 @@ export default function UserDetailPage() {
 
   const handleBanUser = async () => {
     try {
-      const response = await banUser(params.id as string, !user.is_active);
+      // Jika user aktif, kita ingin ban dia (kirim banned = true)
+      // Jika user tidak aktif, kita ingin unban dia (kirim banned = false)
+      const shouldBan = user.is_active;
+      const response = await banUser(params.id as string, shouldBan);
       if (response.success) {
         toast({
           title: "Berhasil",
-          description: user.is_active ? "User berhasil di-ban" : "User berhasil di-unban",
+          description: shouldBan ? "User berhasil di-ban" : "User berhasil di-unban",
         });
         loadUser();
       } else {

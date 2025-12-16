@@ -25,8 +25,9 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SuperAdminRoute from "@/components/admin/layout/SuperAdminRoute";
 
-export default function AdminSettingsPage() {
+function AdminSettingsContent() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [banks, setBanks] = useState<any[]>([]);
@@ -585,6 +586,14 @@ export default function AdminSettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function AdminSettingsPage() {
+  return (
+    <SuperAdminRoute>
+      <AdminSettingsContent />
+    </SuperAdminRoute>
   );
 }
 

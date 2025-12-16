@@ -422,3 +422,55 @@ export async function deleteAdminContact(id: number) {
   return handleApiResponse(response);
 }
 
+// Admin Management (Super Admin Only)
+export async function getAdmins() {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/admin/admins`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleApiResponse(response);
+}
+
+export async function createAdmin(data: {
+  email: string;
+  password: string;
+  admin_role: 'SUPER_ADMIN' | 'ADMIN';
+}) {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/admin/admins`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  return handleApiResponse(response);
+}
+
+export async function updateAdminRole(id: string, admin_role: 'SUPER_ADMIN' | 'ADMIN') {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/admin/admins/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ admin_role }),
+  });
+  return handleApiResponse(response);
+}
+
+export async function deleteAdmin(id: string) {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/admin/admins/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return handleApiResponse(response);
+}
+
