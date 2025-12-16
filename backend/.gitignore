@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Database
+*.db
+*.db-journal
+prisma/dev.db*
+
+# Environment
+.env
+.env.local
+
+# Uploads
+uploads/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+

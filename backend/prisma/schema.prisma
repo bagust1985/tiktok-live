@@ -1,0 +1,155 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id              String   @id @default(uuid())
+  username        String   @unique
+  email           String   @unique
+  password        String   // Hashed with Bun.password
+  pin             String?  // 6 Digit Security PIN
+  
+  // Profile fields
+  full_name       String?  // Nama Lengkap (untuk display)
+  avatar_url      String?  // URL Foto Profil (Cth: /uploads/avatars/avatar-123.jpg)
+  phone           String?  // No WA (Opsional)
+  
+  // Terms of Service
+  tos_agreed_at   DateTime? // Mencatat waktu klik setuju ToS
+  
+  tier_level      Int      @default(0) // 0:Free, 1:Lvl3, 2:Lvl2, 3:Lvl1
+  is_active       Boolean  @default(false)
+  is_admin        Boolean  @default(false) // Admin role
+  
+  // -- RELASI JARINGAN --
+  sponsor_id      String?  // Upline Sponsor (Unilevel)
+  sponsor         User?    @relation("Sponsorship", fields: [sponsor_id], references: [id])
+  downlines       User[]   @relation("Sponsorship")
+  
+  upline_binary_id String? // Upline Placement (Binary)
+  upline_binary   User?    @relation("BinaryPlacement", fields: [upline_binary_id], references: [id])
+  binary_downlines User[]  @relation("BinaryPlacement")
+  position         String? // 'LEFT' or 'RIGHT'
+  
+  // -- RELASI LAIN --
+  wallet          Wallet?
+  tasks           TaskLog[]
+  transactions    Transaction[]
+  
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
+
+// 2. DOMPET USER (Split Balance System)
+model Wallet {
+  id              String   @id @default(uuid())
+  user_id         String   @unique
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  // -- KATEGORI LOCKED (Cair setelah 3 Bulan) --
+  balance_deposit      Decimal  @default(0) // Modal Awal
+  balance_reward_task  Decimal  @default(0) // Gaji Harian
+  balance_matching_lock Decimal @default(0) // Bonus Matching dr Downline
+  
+  unlock_date          DateTime? // Tanggal Jatuh Tempo (H+90)
+  
+  // -- KATEGORI AVAILABLE (Cair Kapan Saja) --
+  balance_available    Decimal  @default(0) // Bonus Sponsor & Pairing
+  
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
+
+// 3. PENCATATAN TASK HARIAN
+model TaskLog {
+  id          String   @id @default(uuid())
+  user_id     String
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  date        DateTime @default(now()) // YYYY-MM-DD (hanya tanggal, tanpa waktu)
+  
+  counter     Int      @default(0) // Progress: 0/20
+  last_claim  DateTime? // Timestamp claim terakhir (Rate Limit)
+  
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  @@unique([user_id, date]) // Satu task log per user per hari
+  @@index([user_id, date])
+}
+
+// 4. RIWAYAT TRANSAKSI
+model Transaction {
+  id          String   @id @default(uuid())
+  user_id     String
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  type        String   // DEPOSIT, WD_AVAILABLE, WD_LOCKED, BONUS_SPONSOR, BONUS_PAIRING, BONUS_MATCHING, REWARD_TASK, MANUAL_ADJUSTMENT
+  amount      Decimal
+  status      String   // PENDING, SUCCESS, REJECTED
+  
+  proof_image_url String? // Untuk deposit: bukti transfer
+  bank_account    String? // Untuk withdraw: rekening tujuan
+  bank_name       String?
+  account_name    String?
+  notes           String?
+  rejected_reason String? // Jika status REJECTED
+  
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  @@index([user_id, created_at])
+  @@index([type, status])
+}
+
+// 5. KONFIGURASI TASK (Admin dapat mengedit link tugas)
+model TaskConfig {
+  id          Int      @id @default(autoincrement())
+  sequence    Int      @unique // Urutan Task (1 sampai 20)
+  title       String   // Judul task, misal: "Nonton Video A"
+  description String?  // Deskripsi task (opsional)
+  
+  // Link tujuan saat user klik task
+  target_url  String   // Contoh: "tllapp://tiktok/video/123" atau "https://..."
+  
+  icon_url    String?  // Ikon task (opsional)
+  is_active   Boolean  @default(true)
+  
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  @@index([sequence])
+  @@index([is_active])
+}
+
+// 6. REKENING BANK PERUSAHAAN (Admin dapat manage dinamis)
+model CompanyBank {
+  id             Int      @id @default(autoincrement())
+  bank_name      String   // BCA, MANDIRI, DANA, dll
+  account_number String   
+  account_holder String   
+  is_active      Boolean  @default(true) // Admin Toggle ON/OFF
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  
+  @@index([is_active])
+}
+
+// 7. KONTAK CALL CENTER (Admin dapat manage dinamis)
+model ContactCenter {
+  id        Int      @id @default(autoincrement())
+  title     String   // Cth: "CS Deposit", "CS Task"
+  number    String   // Cth: "08123456789"
+  type      String   // Enum-like: "WHATSAPP" | "TELEGRAM"
+  sequence  Int      @default(1) // Urutan 1, 2, 3
+  is_active Boolean  @default(true)
+  
+  @@index([is_active, sequence])
+}
