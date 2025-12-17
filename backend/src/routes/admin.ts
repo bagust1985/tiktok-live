@@ -2,6 +2,8 @@ import { Elysia } from "elysia";
 import { adminMiddleware } from "../middleware/admin";
 import { superAdminMiddleware } from "../middleware/super-admin";
 import { MEMBERSHIP_TIERS, LOCK_PERIOD_DAYS } from "../constants";
+import { writeFileSync, existsSync, mkdirSync } from "fs";
+import { join } from "path";
 
 export default new Elysia()
   .use(adminMiddleware)
@@ -148,7 +150,7 @@ export default new Elysia()
       return {
         success: true,
         data: {
-          transactions: transactions.map((tx) => ({
+          transactions: transactions.map((tx: any) => ({
             ...tx,
             amount: Number(tx.amount),
           })),
@@ -450,7 +452,7 @@ export default new Elysia()
       return {
         success: true,
         data: {
-          users: users.map((user) => {
+          users: users.map((user: any) => {
             const { password: _, ...userWithoutPassword } = user;
             return {
               ...userWithoutPassword,
@@ -631,7 +633,7 @@ export default new Elysia()
       const value = action === "ADD" ? amount : -amount;
 
       // Update wallet in transaction
-      await db.$transaction(async (tx) => {
+      await db.$transaction(async (tx: any) => {
         if (walletType === "DEPOSIT_LOCKED") {
           // Check if balance will go negative
           const currentBalance = Number(user.wallet.balance_deposit);
@@ -833,8 +835,8 @@ export default new Elysia()
 
         if (!userNode) return null;
 
-        const leftDownline = userNode.binary_downlines.find((d) => d.position === "LEFT");
-        const rightDownline = userNode.binary_downlines.find((d) => d.position === "RIGHT");
+        const leftDownline = userNode.binary_downlines.find((d: any) => d.position === "LEFT");
+        const rightDownline = userNode.binary_downlines.find((d: any) => d.position === "RIGHT");
 
         return {
           id: userNode.id,
@@ -1251,6 +1253,82 @@ export default new Elysia()
       return {
         success: false,
         message: "Terjadi kesalahan",
+      };
+    }
+      })
+      // Task Management - Upload icon
+      .post("/:id/upload-icon", async ({ params, body, db, set }) => {
+    try {
+      const { icon_base64 } = body as any;
+
+      if (!icon_base64) {
+        set.status = 400;
+        return {
+          success: false,
+          message: "Icon image is required",
+        };
+      }
+
+      // Check if task exists
+      const task = await db.taskConfig.findUnique({
+        where: { id: parseInt(params.id) },
+      });
+
+      if (!task) {
+        set.status = 404;
+        return {
+          success: false,
+          message: "Task tidak ditemukan",
+        };
+      }
+
+      // Decode base64 image
+      const base64Data = icon_base64.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+
+      // Determine file extension from base64 header
+      let extension = "png"; // default
+      if (icon_base64.startsWith("data:image/jpeg")) extension = "jpg";
+      if (icon_base64.startsWith("data:image/jpg")) extension = "jpg";
+      if (icon_base64.startsWith("data:image/png")) extension = "png";
+      if (icon_base64.startsWith("data:image/gif")) extension = "gif";
+      if (icon_base64.startsWith("data:image/webp")) extension = "webp";
+
+      // Generate filename
+      const timestamp = Date.now();
+      const filename = `task-${params.id}-${timestamp}.${extension}`;
+
+      // Ensure directory exists
+      const uploadDir = join(process.cwd(), "public", "uploads", "task-icons");
+      if (!existsSync(uploadDir)) {
+        mkdirSync(uploadDir, { recursive: true });
+      }
+
+      // Save file
+      const filePath = join(uploadDir, filename);
+      writeFileSync(filePath, buffer);
+
+      // Update task with new icon URL
+      const iconUrl = `/uploads/task-icons/${filename}`;
+      const updatedTask = await db.taskConfig.update({
+        where: { id: parseInt(params.id) },
+        data: { icon_url: iconUrl },
+      });
+
+      return {
+        success: true,
+        message: "Icon berhasil diupload",
+        data: {
+          icon_url: iconUrl,
+          task: updatedTask,
+        },
+      };
+    } catch (error: any) {
+      console.error("Upload icon error:", error);
+      set.status = 500;
+      return {
+        success: false,
+        message: "Terjadi kesalahan saat upload icon",
       };
     }
       })

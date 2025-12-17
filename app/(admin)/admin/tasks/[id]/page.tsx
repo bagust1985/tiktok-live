@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getAdminTask, updateAdminTask } from "@/lib/api-admin";
+import { getAdminTask, updateAdminTask, uploadTaskIcon } from "@/lib/api-admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,15 +10,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload, X } from "lucide-react";
+import Image from "next/image";
 
 export default function TaskEditPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [task, setTask] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [iconPreview, setIconPreview] = useState<string>("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -40,13 +44,20 @@ export default function TaskEditPage() {
         icon_url: task.icon_url || "",
         is_active: task.is_active !== undefined ? task.is_active : true,
       });
+      // Set icon preview from existing icon_url
+      if (task.icon_url) {
+        const iconUrl = task.icon_url.startsWith('http') 
+          ? task.icon_url 
+          : `${process.env.NEXT_PUBLIC_API_URL}${task.icon_url}`;
+        setIconPreview(iconUrl);
+      }
     }
   }, [task]);
 
   const loadTask = async () => {
     setLoading(true);
     try {
-      const response = await getAdminTask(parseInt(params.id as string));
+      const response: any = await getAdminTask(parseInt(params.id as string));
       if (response.success) {
         setTask(response.data);
       } else {
@@ -57,7 +68,7 @@ export default function TaskEditPage() {
         });
         router.back();
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Terjadi kesalahan",
@@ -66,6 +77,101 @@ export default function TaskEditPage() {
       router.back();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Error",
+        description: "File harus berupa gambar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "Ukuran file maksimal 2MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Read file and convert to base64
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result as string;
+      setIconPreview(base64String);
+      
+      // Upload immediately
+      await handleUploadIcon(base64String);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUploadIcon = async (base64String: string) => {
+    setUploading(true);
+    try {
+      const response: any = await uploadTaskIcon(parseInt(params.id as string), base64String);
+      if (response.success) {
+        toast({
+          title: "Berhasil",
+          description: "Icon berhasil diupload",
+        });
+        // Update form data with new icon URL
+        setFormData({ ...formData, icon_url: response.data.icon_url });
+        // Reload task to get updated data
+        await loadTask();
+      } else {
+        toast({
+          title: "Gagal",
+          description: response.message || "Gagal upload icon",
+          variant: "destructive",
+        });
+        setIconPreview(""); // Reset preview on error
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat upload icon",
+        variant: "destructive",
+      });
+      setIconPreview(""); // Reset preview on error
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveIcon = async () => {
+    setIconPreview("");
+    setFormData({ ...formData, icon_url: "" });
+    
+    // Update task to remove icon
+    setSaving(true);
+    try {
+      const response: any = await updateAdminTask(parseInt(params.id as string), { icon_url: "" });
+      if (response.success) {
+        toast({
+          title: "Berhasil",
+          description: "Icon berhasil dihapus",
+        });
+        await loadTask();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Gagal menghapus icon",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -81,7 +187,7 @@ export default function TaskEditPage() {
 
     setSaving(true);
     try {
-      const response = await updateAdminTask(parseInt(params.id as string), formData);
+      const response: any = await updateAdminTask(parseInt(params.id as string), formData);
       if (response.success) {
         toast({
           title: "Berhasil",
@@ -95,7 +201,7 @@ export default function TaskEditPage() {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Terjadi kesalahan",
@@ -173,16 +279,67 @@ export default function TaskEditPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="icon_url">Icon URL</Label>
-            <Input
-              id="icon_url"
-              value={formData.icon_url}
-              onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })}
-              placeholder="https://example.com/icon.png"
-            />
+            <Label>Task Icon (Opsional)</Label>
+            
+            {/* Icon Preview */}
+            {iconPreview && (
+              <div className="relative w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
+                <Image
+                  src={iconPreview}
+                  alt="Icon preview"
+                  width={96}
+                  height={96}
+                  className="object-contain"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute -top-2 -right-2 h-6 w-6"
+                  onClick={handleRemoveIcon}
+                  disabled={uploading || saving}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {/* Upload Button */}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading || saving}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploading ? "Uploading..." : iconPreview ? "Ganti Icon" : "Upload Icon"}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+            
             <p className="text-xs text-muted-foreground">
-              URL untuk icon task (opsional)
+              Upload icon task (PNG, JPG, max 2MB, 128x128px recommended)
             </p>
+            
+            {/* Icon URL field (read-only, for reference) */}
+            {formData.icon_url && (
+              <div className="space-y-1">
+                <Label htmlFor="icon_url" className="text-xs">Icon URL</Label>
+                <Input
+                  id="icon_url"
+                  value={formData.icon_url}
+                  readOnly
+                  className="text-xs"
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex items-center space-x-2">

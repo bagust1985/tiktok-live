@@ -61,5 +61,8 @@ export default new Elysia()
   })
   .get("/proofs/:filename", async ({ params, set }) => {
     return serveImageFile(params, "proofs", set);
+  })
+  .get("/task-icons/:filename", async ({ params, set }) => {
+    return serveImageFile(params, "task-icons", set);
   });
 

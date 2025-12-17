@@ -36,7 +36,7 @@ export default function AdminManagementPage() {
   const loadAdmins = async () => {
     setLoading(true);
     try {
-      const response = await getAdmins();
+      const response: any = await getAdmins();
       if (response.success) {
         setAdmins(response.data);
       } else {
@@ -46,7 +46,7 @@ export default function AdminManagementPage() {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Terjadi kesalahan",
@@ -69,7 +69,7 @@ export default function AdminManagementPage() {
 
     setSubmitting(true);
     try {
-      const response = await createAdmin(formData);
+      const response: any = await createAdmin(formData);
       if (response.success) {
         toast({
           title: "Berhasil",
@@ -85,7 +85,7 @@ export default function AdminManagementPage() {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Terjadi kesalahan",
@@ -101,7 +101,7 @@ export default function AdminManagementPage() {
 
     setSubmitting(true);
     try {
-      const response = await updateAdminRole(selectedAdmin.id, formData.admin_role);
+      const response: any = await updateAdminRole(selectedAdmin.id, formData.admin_role);
       if (response.success) {
         toast({
           title: "Berhasil",
@@ -117,7 +117,7 @@ export default function AdminManagementPage() {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Terjadi kesalahan",
@@ -132,7 +132,7 @@ export default function AdminManagementPage() {
     if (!confirm("Yakin ingin menghapus admin ini?")) return;
 
     try {
-      const response = await deleteAdmin(id);
+      const response: any = await deleteAdmin(id);
       if (response.success) {
         toast({
           title: "Berhasil",
@@ -146,7 +146,7 @@ export default function AdminManagementPage() {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Terjadi kesalahan",

@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, Clock, CheckCircle2 } from "lucide-react";
+import Image from "next/image";
 
 interface TaskButtonProps {
   taskNumber: number;
@@ -92,7 +93,7 @@ export default function TaskButton({
     // 3. After 15 seconds, claim the task
     setTimeout(async () => {
       try {
-        const response = await claimTask();
+        const response: any = await claimTask();
 
         if (response.success) {
           incrementCounter();
@@ -100,7 +101,7 @@ export default function TaskButton({
           setCompleted(true);
 
           // Refresh wallet balance
-          const walletResponse = await getWalletBalance();
+          const walletResponse: any = await getWalletBalance();
           if (walletResponse.success) {
             setWallet(walletResponse.data);
           }
@@ -121,7 +122,7 @@ export default function TaskButton({
             variant: "destructive",
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error claiming task:", error);
         toast({
           title: "Error",
@@ -136,6 +137,20 @@ export default function TaskButton({
   };
 
   const isDisabled = loading || currentCount >= maxCount || completed || !canClaim || !hasEnoughBalance;
+
+  // Get icon URL (handle both relative and absolute paths)
+  const getIconUrl = () => {
+    if (!taskConfig?.icon_url) return null;
+    
+    if (taskConfig.icon_url.startsWith('http')) {
+      return taskConfig.icon_url;
+    }
+    
+    // Relative path from backend
+    return `${process.env.NEXT_PUBLIC_API_URL}${taskConfig.icon_url}`;
+  };
+
+  const iconUrl = getIconUrl();
 
   return (
     <div className="relative">
@@ -167,7 +182,22 @@ export default function TaskButton({
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <Play className="h-6 w-6" />
+            {iconUrl ? (
+              <div className="relative w-10 h-10">
+                <Image
+                  src={iconUrl}
+                  alt={taskConfig?.title || `Task ${taskNumber}`}
+                  fill
+                  className="object-contain"
+                  onError={(e) => {
+                    // Hide image and show Play icon on error
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            ) : (
+              <Play className="h-6 w-6" />
+            )}
             <span className="text-sm">{taskConfig?.title || `Task ${taskNumber}`}</span>
           </div>
         )}

@@ -268,6 +268,19 @@ export async function updateAdminTask(
   return handleApiResponse(response);
 }
 
+export async function uploadTaskIcon(id: number, iconBase64: string) {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/admin/tasks/${id}/upload-icon`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ icon_base64: iconBase64 }),
+  });
+  return handleApiResponse(response);
+}
+
 export async function initializeTasks() {
   const token = getAuthToken();
   const response = await fetch(`${API_BASE_URL}/admin/tasks/initialize`, {
