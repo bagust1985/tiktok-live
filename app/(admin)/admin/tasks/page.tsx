@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getAdminTasks, initializeTasks } from "@/lib/api-admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,14 +18,10 @@ function TasksContent() {
   const [loading, setLoading] = useState(true);
   const [initializing, setInitializing] = useState(false);
 
-  useEffect(() => {
-    loadTasks();
-  }, []);
-
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getAdminTasks();
+      const response: any = await getAdminTasks();
       if (response.success) {
         setTasks(response.data || []);
       } else {
@@ -44,7 +40,11 @@ function TasksContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadTasks();
+  }, [loadTasks]);
 
   const handleInitialize = async () => {
     if (!confirm("Apakah Anda yakin ingin meng-initialize 20 default tasks? Ini akan membuat tasks baru jika belum ada.")) {
@@ -53,7 +53,7 @@ function TasksContent() {
 
     setInitializing(true);
     try {
-      const response = await initializeTasks();
+      const response: any = await initializeTasks();
       if (response.success) {
         toast({
           title: "Berhasil",

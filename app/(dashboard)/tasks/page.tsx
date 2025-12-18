@@ -20,7 +20,7 @@ export default function TasksPage() {
   // Load initial data
   useEffect(() => {
     // Load task status
-    getTaskStatus().then((response) => {
+    getTaskStatus().then((response: any) => {
       if (response.success) {
         setTaskLog(response.data);
         setHasEnoughBalance(response.data.hasEnoughBalance !== false);
@@ -34,14 +34,14 @@ export default function TasksPage() {
     });
 
     // Load wallet to get tier level for reward calculation
-    getWalletBalance().then((response) => {
+    getWalletBalance().then((response: any) => {
       if (response.success) {
         setWallet(response.data);
       }
     });
 
     // Load task configs
-    getTaskConfigs().then((response) => {
+    getTaskConfigs().then((response: any) => {
       if (response.success) {
         setTaskConfigs(response.data || []);
       }
@@ -133,7 +133,7 @@ export default function TasksPage() {
           <TaskResetTimer
             onReset={async () => {
               // Refresh task status when timer reaches zero
-              const response = await getTaskStatus();
+              const response: any = await getTaskStatus();
               if (response.success) {
                 setTaskLog(response.data);
                 setHasEnoughBalance(response.data.hasEnoughBalance !== false);

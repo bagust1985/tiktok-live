@@ -19,7 +19,7 @@ export default function NetworkPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    getNetworkStats().then((response) => {
+    getNetworkStats().then((response: any) => {
       if (response.success) {
         setStats(response.data);
       }

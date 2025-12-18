@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useWalletStore } from "@/store/walletStore";
@@ -24,18 +24,19 @@ export default function DashboardPage() {
     initFromStorage();
 
     // Load wallet balance
-    getWalletBalance().then((response) => {
+    getWalletBalance().then((response: any) => {
       if (response.success) {
         setWallet(response.data);
       }
     });
 
     // Load task status
-    getTaskStatus().then((response) => {
+    getTaskStatus().then((response: any) => {
       if (response.success) {
         setTaskLog(response.data);
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setWallet, setTaskLog]);
 
   const totalLocked =

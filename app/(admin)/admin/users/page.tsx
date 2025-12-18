@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getAdminUsers } from "@/lib/api-admin";
 import { formatIDR } from "@/lib/format";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,14 +33,10 @@ function AdminUsersContent() {
     page: "1",
   });
 
-  useEffect(() => {
-    loadUsers();
-  }, [filters]);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getAdminUsers({
+      const response: any = await getAdminUsers({
         search: filters.search || undefined,
         tier_level: filters.tier_level && filters.tier_level !== "all" ? parseInt(filters.tier_level) : undefined,
         is_active: filters.is_active && filters.is_active !== "all" ? filters.is_active === "true" : undefined,
@@ -66,7 +62,11 @@ function AdminUsersContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, toast]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const getTierLabel = (tier: number) => {
     if (tier === 0) return "Free";
@@ -98,7 +98,7 @@ function AdminUsersContent() {
             />
             <Select
               value={filters.tier_level || "all"}
-              onValueChange={(value) => setFilters({ ...filters, tier_level: value === "all" ? undefined : value, page: "1" })}
+              onValueChange={(value) => setFilters({ ...filters, tier_level: value === "all" ? "all" : value, page: "1" })}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="All Tiers" />
@@ -113,7 +113,7 @@ function AdminUsersContent() {
             </Select>
             <Select
               value={filters.is_active || "all"}
-              onValueChange={(value) => setFilters({ ...filters, is_active: value === "all" ? undefined : value, page: "1" })}
+              onValueChange={(value) => setFilters({ ...filters, is_active: value === "all" ? "all" : value, page: "1" })}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="All Status" />

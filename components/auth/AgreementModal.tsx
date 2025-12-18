@@ -156,7 +156,7 @@ export default function AgreementModal({ onAgree, onCancel }: AgreementModalProp
 
           <div className="mt-8 pt-4 border-t border-gray-200 text-center">
             <p className="font-bold text-gray-900 mb-4">
-              DENGAN MENEKAN TOMBOL "SETUJU", SAYA MENYATAKAN BAHWA SAYA DALAM
+              DENGAN MENEKAN TOMBOL &quot;SETUJU&quot;, SAYA MENYATAKAN BAHWA SAYA DALAM
               KEADAAN SADAR, TIDAK ADA PAKSAAN, DAN MENGERTI BAHWA DANA SAYA AKAN
               DITAHAN SELAMA 30 HARI.
             </p>

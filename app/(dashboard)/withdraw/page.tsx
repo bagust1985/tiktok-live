@@ -12,7 +12,7 @@ export default function WithdrawPage() {
   const { wallet, setWallet } = useWalletStore();
 
   useEffect(() => {
-    getWalletBalance().then((response) => {
+    getWalletBalance().then((response: any) => {
       if (response.success) {
         setWallet(response.data);
       }

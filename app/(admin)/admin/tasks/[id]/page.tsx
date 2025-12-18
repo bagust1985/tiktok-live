@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getAdminTask, updateAdminTask, uploadTaskIcon } from "@/lib/api-admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,30 +31,7 @@ export default function TaskEditPage() {
     is_active: true,
   });
 
-  useEffect(() => {
-    loadTask();
-  }, [params.id]);
-
-  useEffect(() => {
-    if (task) {
-      setFormData({
-        title: task.title || "",
-        description: task.description || "",
-        target_url: task.target_url || "",
-        icon_url: task.icon_url || "",
-        is_active: task.is_active !== undefined ? task.is_active : true,
-      });
-      // Set icon preview from existing icon_url
-      if (task.icon_url) {
-        const iconUrl = task.icon_url.startsWith('http') 
-          ? task.icon_url 
-          : `${process.env.NEXT_PUBLIC_API_URL}${task.icon_url}`;
-        setIconPreview(iconUrl);
-      }
-    }
-  }, [task]);
-
-  const loadTask = async () => {
+  const loadTask = useCallback(async () => {
     setLoading(true);
     try {
       const response: any = await getAdminTask(parseInt(params.id as string));
@@ -78,7 +55,30 @@ export default function TaskEditPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id, toast, router]);
+
+  useEffect(() => {
+    loadTask();
+  }, [loadTask]);
+
+  useEffect(() => {
+    if (task) {
+      setFormData({
+        title: task.title || "",
+        description: task.description || "",
+        target_url: task.target_url || "",
+        icon_url: task.icon_url || "",
+        is_active: task.is_active !== undefined ? task.is_active : true,
+      });
+      // Set icon preview from existing icon_url
+      if (task.icon_url) {
+        const iconUrl = task.icon_url.startsWith('http') 
+          ? task.icon_url 
+          : `${process.env.NEXT_PUBLIC_API_URL}${task.icon_url}`;
+        setIconPreview(iconUrl);
+      }
+    }
+  }, [task]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -17,13 +17,13 @@ export default function WalletPage() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
   useEffect(() => {
-    getWalletBalance().then((response) => {
+    getWalletBalance().then((response: any) => {
       if (response.success) {
         setWallet(response.data);
       }
     });
 
-    getTransactions().then((response) => {
+    getTransactions().then((response: any) => {
       if (response.success) {
         setTransactions(response.data);
       }
