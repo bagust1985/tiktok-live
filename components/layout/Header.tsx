@@ -13,9 +13,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, User, Wallet } from "lucide-react";
 import Logo from "@/components/ui/Logo";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
 
 export default function Header() {
   const router = useRouter();
@@ -33,6 +35,10 @@ export default function Header() {
     .join("")
     .toUpperCase()
     .slice(0, 2) || "U";
+
+  const avatarUrl = user?.avatar_url 
+    ? `${API_BASE_URL}${user.avatar_url}`
+    : null;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -53,6 +59,9 @@ export default function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar>
+                  {avatarUrl && (
+                    <AvatarImage src={avatarUrl} alt={user?.username || "User"} />
+                  )}
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
               </Button>
