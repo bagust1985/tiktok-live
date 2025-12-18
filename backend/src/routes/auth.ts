@@ -16,6 +16,14 @@ export default new Elysia()
           };
         }
 
+        if (!referral_code) {
+          set.status = 400;
+          return {
+            success: false,
+            message: "Kode referral wajib diisi",
+          };
+        }
+
         if (password.length < 6) {
           set.status = 400;
           return {
@@ -39,21 +47,35 @@ export default new Elysia()
           };
         }
 
+        // Validate referral_code exists in database and is active
+        const sponsor = await db.user.findUnique({
+          where: { id: referral_code },
+        });
+
+        if (!sponsor) {
+          set.status = 400;
+          return {
+            success: false,
+            message: "Kode referral tidak valid atau tidak terdaftar",
+          };
+        }
+
+        // Check if sponsor is active (only active users can have referral codes)
+        if (!sponsor.is_active) {
+          set.status = 400;
+          return {
+            success: false,
+            message: "Kode referral tidak aktif. User sponsor belum melakukan deposit",
+          };
+        }
+
         // Hash password with Bun
         const hashedPassword = await Bun.password.hash(password, {
           algorithm: "argon2id",
         });
 
-        // Find sponsor if referral_code provided
-        let sponsorId: string | null = null;
-        if (referral_code) {
-          const sponsor = await db.user.findUnique({
-            where: { id: referral_code },
-          });
-          if (sponsor) {
-            sponsorId = sponsor.id;
-          }
-        }
+        // Use sponsor ID (referral_code is valid and active)
+        const sponsorId = sponsor.id;
 
         // Create user
         const user = await db.user.create({
@@ -115,7 +137,7 @@ export default new Elysia()
         username: t.String(),
         email: t.String(),
         password: t.String(),
-        referral_code: t.Optional(t.String()),
+        referral_code: t.String(),
       }),
     }
   )

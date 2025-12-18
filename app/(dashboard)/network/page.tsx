@@ -26,9 +26,12 @@ export default function NetworkPage() {
     });
   }, []);
 
-  const referralCode = user?.id || "N/A";
+  const referralCode = user?.is_active ? user.id : null;
+  const shareLink = user?.is_active ? `${typeof window !== 'undefined' ? window.location.origin : ''}/register?ref=${user.id}` : null;
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const handleCopyReferral = () => {
+    if (!referralCode) return;
     navigator.clipboard.writeText(referralCode);
     setCopied(true);
     toast({
@@ -36,6 +39,17 @@ export default function NetworkPage() {
       description: "Kode referral berhasil disalin",
     });
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyShareLink = () => {
+    if (!shareLink) return;
+    navigator.clipboard.writeText(shareLink);
+    setCopiedLink(true);
+    toast({
+      title: "Berhasil",
+      description: "Link referral berhasil disalin",
+    });
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
   return (
@@ -52,30 +66,72 @@ export default function NetworkPage() {
         <CardHeader>
           <CardTitle>Kode Referral</CardTitle>
           <CardDescription>
-            Bagikan kode ini untuk mendapatkan bonus sponsor
+            {user?.is_active
+              ? "Bagikan kode ini untuk mendapatkan bonus sponsor"
+              : "Lakukan deposit untuk mengaktifkan akun dan mendapatkan kode referral"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
-            <div className="flex-1 p-4 border rounded-lg bg-muted font-mono text-lg font-bold">
-              {referralCode}
+          {user?.is_active ? (
+            <div className="flex items-center gap-4">
+              <div className="flex-1 p-4 border rounded-lg bg-muted font-mono text-lg font-bold">
+                {referralCode}
+              </div>
+              <Button onClick={handleCopyReferral} variant="outline">
+                {copied ? (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Disalin
+                  </>
+                ) : (
+                  <>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Salin
+                  </>
+                )}
+              </Button>
             </div>
-            <Button onClick={handleCopyReferral} variant="outline">
-              {copied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Disalin
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Salin
-                </>
-              )}
-            </Button>
-          </div>
+          ) : (
+            <div className="p-4 border rounded-lg bg-muted text-center">
+              <p className="text-muted-foreground">
+                Akun Anda belum aktif. Silakan lakukan deposit terlebih dahulu untuk mendapatkan kode referral.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Share Link */}
+      {user?.is_active && shareLink && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Share Link</CardTitle>
+            <CardDescription>
+              Bagikan link ini untuk registrasi dengan kode referral Anda
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <div className="flex-1 p-4 border rounded-lg bg-muted text-sm break-all">
+                {shareLink}
+              </div>
+              <Button onClick={handleCopyShareLink} variant="outline">
+                {copiedLink ? (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Disalin
+                  </>
+                ) : (
+                  <>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Salin Link
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Network Stats */}
       {stats && (

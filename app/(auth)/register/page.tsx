@@ -35,11 +35,22 @@ export default function RegisterPage() {
     } else {
       setShowAgreement(true);
     }
+
+    // Auto-fill referral code from query parameter
+    const refCode = searchParams.get("ref");
+    if (refCode) {
+      setFormData((prev) => ({
+        ...prev,
+        referral_code: refCode,
+      }));
+    }
   }, [searchParams]);
 
   const handleAgree = () => {
-    // Redirect to register form
-    router.push("/register?step=form");
+    // Redirect to register form, preserve ref parameter if exists
+    const refCode = searchParams.get("ref");
+    const redirectUrl = refCode ? `/register?step=form&ref=${refCode}` : "/register?step=form";
+    router.push(redirectUrl);
     setShowAgreement(false);
   };
 
@@ -68,6 +79,15 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!formData.referral_code || formData.referral_code.trim() === "") {
+      toast({
+        title: "Error",
+        description: "Kode referral wajib diisi",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -75,7 +95,7 @@ export default function RegisterPage() {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        referral_code: formData.referral_code || undefined,
+        referral_code: formData.referral_code,
       });
 
       if (response.success && response.user) {
@@ -172,7 +192,7 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="referral_code">Kode Referral (Optional)</Label>
+              <Label htmlFor="referral_code">Kode Referral</Label>
               <Input
                 id="referral_code"
                 type="text"
@@ -181,6 +201,7 @@ export default function RegisterPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, referral_code: e.target.value })
                 }
+                required
               />
             </div>
           </CardContent>
