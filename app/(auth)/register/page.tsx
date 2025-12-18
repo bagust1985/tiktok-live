@@ -99,12 +99,12 @@ export default function RegisterPage() {
       });
 
       if (response.success && response.user) {
-        loginUser(response.user);
         toast({
           title: "Registrasi Berhasil",
-          description: "Selamat datang! Silakan deposit untuk mulai.",
+          description: response.message || "Silakan cek email Anda untuk kode OTP verifikasi",
         });
-        router.push("/dashboard");
+        // Redirect to verify-email page with email
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
       } else {
         toast({
           title: "Registrasi Gagal",

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTaskStore } from "@/store/taskStore";
 import { useWalletStore } from "@/store/walletStore";
-import { claimTask, getWalletBalance } from "@/lib/api";
+import { claimTask, getWalletBalance, getTaskStatus } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +40,7 @@ export default function TaskButton({
 }: TaskButtonProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { incrementCounter, setLastClaimTime } = useTaskStore();
+  const { incrementCounter, setLastClaimTime, setTaskLog } = useTaskStore();
   const { wallet, setWallet } = useWalletStore();
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -106,15 +106,16 @@ export default function TaskButton({
             setWallet(walletResponse.data);
           }
 
+          // Refresh task status from backend to sync state and unlock next task
+          const taskStatusResponse: any = await getTaskStatus();
+          if (taskStatusResponse.success) {
+            setTaskLog(taskStatusResponse.data);
+          }
+
           toast({
             title: "Task Selesai!",
             description: `Anda mendapatkan reward ${response.data.reward ? `Rp ${response.data.reward.toLocaleString('id-ID')}` : ''}`,
           });
-
-          // Auto reload setelah 1.5 detik untuk update progress dan wallet
-          setTimeout(() => {
-            window.location.reload();
-          }, 1500);
         } else {
           toast({
             title: "Gagal",

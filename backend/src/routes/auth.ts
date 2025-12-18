@@ -1,4 +1,6 @@
 import { Elysia, t } from "elysia";
+import { sendOTPEmail } from "../services/email";
+import { generateOTP, getOTPExpiryDate, isOTPExpired, isAttemptsExceeded, isValidOTPFormat } from "../services/otp";
 
 export default new Elysia()
   .post(
@@ -108,20 +110,36 @@ export default new Elysia()
           },
         });
 
-        const { password: _, ...userWithoutPassword } = user;
+        // Generate OTP for email verification
+        const otpCode = generateOTP();
+        const expiresAt = getOTPExpiryDate();
 
-        // Generate JWT token (auto-login after register)
-        const token = await jwt.sign({
-          userId: user.id,
-          username: user.username,
-          is_admin: user.is_admin,
+        // Create email verification record
+        await db.emailVerification.create({
+          data: {
+            user_id: user.id,
+            otp_code: otpCode,
+            expires_at: expiresAt,
+            attempts: 0,
+            verified: false,
+          },
         });
+
+        // Send OTP email
+        const emailResult = await sendOTPEmail(email, otpCode, username);
+        if (!emailResult.success) {
+          console.error("Failed to send OTP email:", emailResult.error);
+          // Still return success but log the error
+          // User can request resend if email fails
+        }
+
+        const { password: _, ...userWithoutPassword } = user;
 
         return {
           success: true,
-          message: "Registrasi berhasil",
+          message: "Registrasi berhasil. Silakan cek email Anda untuk kode OTP verifikasi.",
           user: userWithoutPassword,
-          token,
+          requiresVerification: true,
         };
       } catch (error: any) {
         console.error("Register error:", error);
@@ -181,6 +199,16 @@ export default new Elysia()
           };
         }
 
+        // Check if email is verified
+        if (!user.email_verified) {
+          set.status = 403;
+          return {
+            success: false,
+            message: "Email belum terverifikasi. Silakan cek email Anda untuk kode OTP atau request kode baru.",
+            requiresVerification: true,
+          };
+        }
+
         // Generate JWT token
         const token = await jwt.sign({
           userId: user.id,
@@ -209,6 +237,248 @@ export default new Elysia()
       body: t.Object({
         username: t.String(),
         password: t.String(),
+      }),
+    }
+  )
+  // Verify email with OTP
+  .post(
+    "/verify-email",
+    async ({ body, db, jwt, set }) => {
+      try {
+        const { email, otp_code } = body;
+
+        if (!email || !otp_code) {
+          set.status = 400;
+          return {
+            success: false,
+            message: "Email dan kode OTP wajib diisi",
+          };
+        }
+
+        // Validate OTP format
+        if (!isValidOTPFormat(otp_code)) {
+          set.status = 400;
+          return {
+            success: false,
+            message: "Format OTP tidak valid. OTP harus 6 digit angka",
+          };
+        }
+
+        // Find user
+        const user = await db.user.findUnique({
+          where: { email },
+          include: { emailVerification: true },
+        });
+
+        if (!user) {
+          set.status = 404;
+          return {
+            success: false,
+            message: "User tidak ditemukan",
+          };
+        }
+
+        // Check if already verified
+        if (user.email_verified) {
+          set.status = 400;
+          return {
+            success: false,
+            message: "Email sudah terverifikasi",
+          };
+        }
+
+        // Check if email verification record exists
+        if (!user.emailVerification) {
+          set.status = 400;
+          return {
+            success: false,
+            message: "Kode OTP tidak ditemukan. Silakan request kode OTP baru",
+          };
+        }
+
+        const emailVerification = user.emailVerification;
+
+        // Check if already verified
+        if (emailVerification.verified) {
+          set.status = 400;
+          return {
+            success: false,
+            message: "Email sudah terverifikasi",
+          };
+        }
+
+        // Check if OTP expired
+        if (isOTPExpired(emailVerification.expires_at)) {
+          set.status = 400;
+          return {
+            success: false,
+            message: "Kode OTP sudah kedaluwarsa. Silakan request kode OTP baru",
+          };
+        }
+
+        // Check if attempts exceeded
+        if (isAttemptsExceeded(emailVerification.attempts)) {
+          set.status = 400;
+          return {
+            success: false,
+            message: "Batas percobaan verifikasi telah habis. Silakan request kode OTP baru",
+          };
+        }
+
+        // Verify OTP code
+        if (emailVerification.otp_code !== otp_code) {
+          // Increment attempts
+          await db.emailVerification.update({
+            where: { user_id: user.id },
+            data: { attempts: emailVerification.attempts + 1 },
+          });
+
+          set.status = 400;
+          return {
+            success: false,
+            message: "Kode OTP salah",
+          };
+        }
+
+        // OTP is correct - verify email
+        await db.user.update({
+          where: { id: user.id },
+          data: {
+            email_verified: true,
+            email_verified_at: new Date(),
+          },
+        });
+
+        await db.emailVerification.update({
+          where: { user_id: user.id },
+          data: {
+            verified: true,
+          },
+        });
+
+        // Generate JWT token for auto-login
+        const token = await jwt.sign({
+          userId: user.id,
+          username: user.username,
+          is_admin: user.is_admin,
+        });
+
+        const { password: _, ...userWithoutPassword } = user;
+
+        return {
+          success: true,
+          message: "Email berhasil diverifikasi",
+          user: { ...userWithoutPassword, email_verified: true },
+          token,
+        };
+      } catch (error: any) {
+        console.error("Verify email error:", error);
+        set.status = 500;
+        return {
+          success: false,
+          message: "Terjadi kesalahan saat verifikasi email",
+        };
+      }
+    },
+    {
+      body: t.Object({
+        email: t.String(),
+        otp_code: t.String(),
+      }),
+    }
+  )
+  // Resend OTP
+  .post(
+    "/resend-otp",
+    async ({ body, db, set }) => {
+      try {
+        const { email } = body;
+
+        if (!email) {
+          set.status = 400;
+          return {
+            success: false,
+            message: "Email wajib diisi",
+          };
+        }
+
+        // Find user
+        const user = await db.user.findUnique({
+          where: { email },
+          include: { emailVerification: true },
+        });
+
+        if (!user) {
+          set.status = 404;
+          return {
+            success: false,
+            message: "User tidak ditemukan",
+          };
+        }
+
+        // Check if already verified
+        if (user.email_verified) {
+          set.status = 400;
+          return {
+            success: false,
+            message: "Email sudah terverifikasi",
+          };
+        }
+
+        // Generate new OTP
+        const otpCode = generateOTP();
+        const expiresAt = getOTPExpiryDate();
+
+        // Update or create email verification record
+        if (user.emailVerification) {
+          await db.emailVerification.update({
+            where: { user_id: user.id },
+            data: {
+              otp_code: otpCode,
+              expires_at: expiresAt,
+              attempts: 0, // Reset attempts
+              verified: false,
+            },
+          });
+        } else {
+          await db.emailVerification.create({
+            data: {
+              user_id: user.id,
+              otp_code: otpCode,
+              expires_at: expiresAt,
+              attempts: 0,
+              verified: false,
+            },
+          });
+        }
+
+        // Send OTP email
+        const emailResult = await sendOTPEmail(email, otpCode, user.username);
+        if (!emailResult.success) {
+          console.error("Failed to send OTP email:", emailResult.error);
+          set.status = 500;
+          return {
+            success: false,
+            message: "Gagal mengirim email. Silakan coba lagi",
+          };
+        }
+
+        return {
+          success: true,
+          message: "Kode OTP baru telah dikirim ke email Anda",
+        };
+      } catch (error: any) {
+        console.error("Resend OTP error:", error);
+        set.status = 500;
+        return {
+          success: false,
+          message: "Terjadi kesalahan saat mengirim OTP",
+        };
+      }
+    },
+    {
+      body: t.Object({
+        email: t.String(),
       }),
     }
   );

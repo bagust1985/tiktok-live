@@ -43,6 +43,8 @@ export default function AdminLoginPage() {
           // This prevents user logout from affecting admin session
           if (response.token && typeof window !== 'undefined') {
             localStorage.setItem('admin-token', response.token);
+            // Also set as cookie for middleware access (7 days expiry)
+            document.cookie = `admin-token=${response.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
             // Remove auth-token that was set by login() function
             localStorage.removeItem('auth-token');
             // Don't store in auth-user, only admin-user

@@ -25,6 +25,10 @@ model User {
   // Terms of Service
   tos_agreed_at   DateTime? // Mencatat waktu klik setuju ToS
   
+  // Email Verification
+  email_verified  Boolean  @default(false)
+  email_verified_at DateTime?
+  
   tier_level      Int      @default(0) // 0:Free, 1:Lvl3, 2:Lvl2, 3:Lvl1
   is_active       Boolean  @default(false)
   is_admin        Boolean  @default(false) // Admin role
@@ -44,6 +48,7 @@ model User {
   wallet          Wallet?
   tasks           TaskLog[]
   transactions    Transaction[]
+  emailVerification EmailVerification?
   
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
@@ -153,4 +158,22 @@ model ContactCenter {
   is_active Boolean  @default(true)
   
   @@index([is_active, sequence])
+}
+
+// 8. EMAIL VERIFICATION (OTP)
+model EmailVerification {
+  id          String   @id @default(uuid())
+  user_id     String   @unique
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  otp_code    String   // 6 digit OTP
+  expires_at  DateTime // OTP expiration (15 minutes)
+  attempts    Int      @default(0) // Verification attempts (max 5)
+  verified    Boolean  @default(false)
+  
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  @@index([user_id])
+  @@index([expires_at])
 }

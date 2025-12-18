@@ -16,6 +16,7 @@ export default function TasksPage() {
   const [hasEnoughBalance, setHasEnoughBalance] = useState(true);
   const [taskConfigs, setTaskConfigs] = useState<any[]>([]);
 
+  // Load initial data
   useEffect(() => {
     // Load task status
     getTaskStatus().then((response) => {
@@ -45,6 +46,18 @@ export default function TasksPage() {
       }
     });
   }, [setTaskLog, setWallet, setLastClaimTime]);
+
+  // Update nextClaimAvailable when taskLog changes (e.g., after task completion)
+  useEffect(() => {
+    if (taskLog?.last_claim) {
+      const lastClaim = new Date(taskLog.last_claim);
+      const nextClaim = new Date(lastClaim.getTime() + 10000); // 10 seconds rate limit
+      setNextClaimAvailable(nextClaim);
+      setLastClaimTime(lastClaim);
+    } else {
+      setNextClaimAvailable(undefined);
+    }
+  }, [taskLog?.last_claim, setLastClaimTime]);
 
   // Get user tier - default to Level 3 for now
   const userTier = wallet?.balance_deposit
