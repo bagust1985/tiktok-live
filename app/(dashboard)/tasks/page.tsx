@@ -6,6 +6,7 @@ import { useWalletStore } from "@/store/walletStore";
 import { getTaskStatus, getWalletBalance, getTaskConfigs } from "@/lib/api";
 import TaskButton from "@/components/task/TaskButton";
 import TaskProgress from "@/components/task/TaskProgress";
+import TaskResetTimer from "@/components/task/TaskResetTimer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MEMBERSHIP_TIERS } from "@/lib/constants";
 
@@ -123,7 +124,30 @@ export default function TasksPage() {
 
       {/* Task Grid */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Daftar Task</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Daftar Task</h2>
+        </div>
+        
+        {/* Reset Timer */}
+        <div className="mb-4">
+          <TaskResetTimer
+            onReset={async () => {
+              // Refresh task status when timer reaches zero
+              const response = await getTaskStatus();
+              if (response.success) {
+                setTaskLog(response.data);
+                setHasEnoughBalance(response.data.hasEnoughBalance !== false);
+                if (response.data.last_claim) {
+                  const lastClaim = new Date(response.data.last_claim);
+                  const nextClaim = new Date(lastClaim.getTime() + 10000);
+                  setNextClaimAvailable(nextClaim);
+                  setLastClaimTime(lastClaim);
+                }
+              }
+            }}
+          />
+        </div>
+
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {Array.from({ length: maxCount }, (_, i) => i + 1).map((taskNum) => {
             const taskConfig = taskConfigs.find((tc) => tc.sequence === taskNum);
