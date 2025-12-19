@@ -67,9 +67,9 @@ export default function HelpCenter() {
   }, [toast]);
 
   return (
-    <Card>
+    <Card className="bg-white/5 border border-white/10 backdrop-blur-xl">
       <CardHeader>
-        <CardTitle>Help Center</CardTitle>
+        <CardTitle className="ttext-sm text-muted">Help Center</CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (

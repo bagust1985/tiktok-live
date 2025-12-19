@@ -5,101 +5,167 @@ import { MEMBERSHIP_TIERS } from "@/lib/constants";
 import { formatIDR } from "@/lib/format";
 import BankAccountDisplay from "@/components/deposit/BankAccountDisplay";
 import DepositForm from "@/components/deposit/DepositForm";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function DepositPage() {
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Deposit</h1>
-        <p className="text-muted-foreground">
+    <div className="relative space-y-8 px-4 py-6 md:px-6 lg:px-8">
+      {/* Neon background */}
+      <div className="absolute -top-32 -left-32 w-72 h-72 bg-cyan-500/20 blur-3xl rounded-full" />
+      <div className="absolute -bottom-0 -right-0 w-72 h-72 bg-pink-500/20 blur-3xl rounded-full" />
+
+      {/* HEADER */}
+      <div className="relative z-10 space-y-1">
+        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent">
+          Deposit
+        </h1>
+        <p className="text-sm text-muted-foreground">
           Pilih paket membership dan lakukan deposit untuk mulai mengerjakan task
         </p>
       </div>
 
-      {/* Membership Tier Selection */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Pilih Paket Membership</h2>
-        <div className="grid gap-4 md:grid-cols-3">
-          {MEMBERSHIP_TIERS.map((tier) => (
-            <Card
-              key={tier.level}
-              className={`cursor-pointer transition-all hover:border-primary ${
-                selectedTier === tier.level ? "border-primary border-2" : ""
-              }`}
-              onClick={() => setSelectedTier(tier.level)}
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{tier.name}</CardTitle>
-                  {selectedTier === tier.level && (
-                    <CheckCircle2 className="h-5 w-5 text-primary" />
-                  )}
-                </div>
-                <CardDescription>Paket {tier.name}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="text-2xl font-bold text-primary">
-                  {formatIDR(tier.deposit)}
-                </div>
-                <div className="space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Reward/Task:</span>
-                    <span className="font-medium">{formatIDR(tier.rewardPerTask)}</span>
+      {/* MEMBERSHIP */}
+      <div className="relative z-10">
+        <h2 className="text-xl font-semibold mb-4 text-white">
+          Pilih Paket Membership
+        </h2>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {MEMBERSHIP_TIERS.map((tier) => {
+            const active = selectedTier === tier.level;
+
+            return (
+              <Card
+                key={tier.level}
+                onClick={() => setSelectedTier(tier.level)}
+                className={cn(
+                  `
+                  cursor-pointer relative overflow-hidden
+                  border border-white/10
+                  bg-black/40 backdrop-blur
+                  transition-all duration-300
+                  hover:scale-[1.02] hover:border-cyan-400/50
+                `,
+                  active &&
+                    `
+                    border-cyan-400
+                    shadow-[0_0_40px_rgba(34,211,238,0.25)]
+                  `
+                )}
+              >
+                {/* Glow */}
+                {active && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 to-pink-500/10" />
+                )}
+
+                <CardHeader className="relative z-10">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-white flex items-center gap-2">
+                      {tier.name}
+                      {active && (
+                        <Sparkles className="h-4 w-4 text-cyan-400" />
+                      )}
+                    </CardTitle>
+                    {active && (
+                      <CheckCircle2 className="h-5 w-5 text-cyan-400" />
+                    )}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Max Task:</span>
-                    <span className="font-medium">{tier.maxTasks}/hari</span>
+                  <CardDescription className="text-gray-400">
+                    Paket {tier.name}
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent className="relative z-10 space-y-4">
+                  <div className="text-2xl font-extrabold text-cyan-400">
+                    {formatIDR(tier.deposit)}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Income Harian:</span>
-                    <span className="font-medium">{formatIDR(tier.dailyIncome)}</span>
+
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Reward / Task</span>
+                      <span className="font-medium">
+                        {formatIDR(tier.rewardPerTask)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Max Task</span>
+                      <span className="font-medium">
+                        {tier.maxTasks} / hari
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Income Harian</span>
+                      <span className="font-medium">
+                        {formatIDR(tier.dailyIncome)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-t border-white/10 pt-2 mt-2">
+                      <span className="text-gray-400">
+                        Total (30 Hari)
+                      </span>
+                      <span className="font-bold text-pink-400">
+                        {formatIDR(tier.totalIncome30Days)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between border-t pt-2 mt-2">
-                    <span className="text-muted-foreground">Total (30 Hari):</span>
-                    <span className="font-bold text-primary">
-                      {formatIDR(tier.totalIncome30Days)}
-                    </span>
-                  </div>
-                </div>
-                <Badge variant={selectedTier === tier.level ? "default" : "outline"}>
-                  {selectedTier === tier.level ? "Dipilih" : "Pilih"}
-                </Badge>
-              </CardContent>
-            </Card>
-          ))}
+
+                  <Badge
+                    className={cn(
+                      "w-full justify-center py-4",
+                      active
+                        ? "bg-cyan-500 hover:bg-cyan-500"
+                        : "bg-white/10 text-gray-300"
+                    )}
+                  >
+                    {active ? "Dipilih" : "Pilih Paket"}
+                  </Badge>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 
-      {/* Bank Account Display */}
+      {/* BANK + FORM */}
       {selectedTier && (
-        <>
+        <div className="relative z-10 space-y-6">
           <BankAccountDisplay />
           <DepositForm selectedTier={selectedTier} />
-        </>
+        </div>
       )}
 
-      {/* Info about Lock Period */}
-      <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+      {/* LOCK INFO */}
+      <Card className="relative z-10 bg-black/40 backdrop-blur border-cyan-400/20">
         <CardHeader>
-          <CardTitle className="text-blue-900 dark:text-blue-100">
+          <CardTitle className="text-cyan-400">
             Informasi Lock Period
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-blue-800 dark:text-blue-200">
-          <p className="mb-2">
-            Deposit dan reward dari task akan dikunci selama <strong>30 hari</strong>.
+        <CardContent className="text-sm text-gray-300 space-y-2">
+          <p>
+            Deposit dan reward task akan dikunci selama{" "}
+            <span className="font-bold text-white">30 hari</span>.
           </p>
           <p>
-            Setelah 30 hari, saldo akan otomatis masuk ke Available Balance dan bisa ditarik kapan saja.
+            Setelah 30 hari, saldo akan otomatis masuk ke{" "}
+            <span className="font-semibold text-cyan-400">
+              Available Balance
+            </span>{" "}
+            dan bisa ditarik kapan saja.
           </p>
         </CardContent>
       </Card>
     </div>
   );
 }
-

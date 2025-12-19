@@ -8,16 +8,41 @@ import { useWalletStore } from "@/store/walletStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BANK_LIST, MIN_WITHDRAW_AMOUNT, WITHDRAW_ADMIN_FEE } from "@/lib/constants";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  BANK_LIST,
+  MIN_WITHDRAW_AMOUNT,
+  WITHDRAW_ADMIN_FEE,
+} from "@/lib/constants";
 import { formatIDR, formatInputIDR } from "@/lib/format";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Banknote, ShieldCheck } from "lucide-react";
 
 export default function WithdrawForm() {
   const router = useRouter();
   const { toast } = useToast();
   const { wallet, updateBalance } = useWalletStore();
+
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [formData, setFormData] = useState({
@@ -28,15 +53,24 @@ export default function WithdrawForm() {
   });
 
   const availableBalance = wallet?.balance_available || 0;
-  const amountNum = formData.amount ? parseFloat(formData.amount.replace(/\./g, "")) : 0;
+  const amountNum = formData.amount
+    ? parseFloat(formData.amount.replace(/\./g, ""))
+    : 0;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const receivedAmount = Math.max(amountNum - WITHDRAW_ADMIN_FEE, 0);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.bank_name || !formData.bank_account || !formData.account_name || !formData.amount) {
+    if (
+      !formData.bank_name ||
+      !formData.bank_account ||
+      !formData.account_name ||
+      !formData.amount
+    ) {
       toast({
         title: "Error",
-        description: "Mohon lengkapi semua field",
+        description: "Semua field wajib diisi",
         variant: "destructive",
       });
       return;
@@ -45,7 +79,7 @@ export default function WithdrawForm() {
     if (amountNum < MIN_WITHDRAW_AMOUNT) {
       toast({
         title: "Error",
-        description: `Minimum withdraw adalah ${formatIDR(MIN_WITHDRAW_AMOUNT)}`,
+        description: `Minimal withdraw ${formatIDR(MIN_WITHDRAW_AMOUNT)}`,
         variant: "destructive",
       });
       return;
@@ -64,29 +98,27 @@ export default function WithdrawForm() {
   };
 
   const handleConfirm = async () => {
-    setShowConfirm(false);
     setLoading(true);
+    setShowConfirm(false);
 
     try {
-      const response = await withdraw({
+      const res = await withdraw({
         amount: amountNum,
         bank_name: formData.bank_name,
         bank_account: formData.bank_account,
         account_name: formData.account_name,
       });
 
-      if (response.success) {
-        // Update wallet balance (subtract from available)
+      if (res.success) {
         updateBalance({
           balance_available: availableBalance - amountNum,
         });
 
         toast({
-          title: "Berhasil",
-          description: "Withdraw berhasil diajukan. Menunggu proses admin.",
+          title: "Withdraw Diajukan",
+          description: "Permintaan withdraw berhasil dikirim ke admin",
         });
 
-        // Reset form
         setFormData({
           bank_name: "",
           bank_account: "",
@@ -98,14 +130,14 @@ export default function WithdrawForm() {
       } else {
         toast({
           title: "Gagal",
-          description: response.message || "Gagal mengajukan withdraw",
+          description: res.message || "Withdraw gagal",
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
-        description: "Terjadi kesalahan saat mengajukan withdraw",
+        description: "Terjadi kesalahan sistem",
         variant: "destructive",
       });
     } finally {
@@ -115,38 +147,74 @@ export default function WithdrawForm() {
 
   return (
     <>
-      <Card>
+      {/* ================= FORM CARD ================= */}
+      <Card className="bg-black/40 border border-white/10 backdrop-blur-xl">
         <CardHeader>
-          <CardTitle>Form Withdraw</CardTitle>
-          <CardDescription>
-            Tarik saldo dari Available Balance ke rekening bank Anda
+          <CardTitle className="flex items-center gap-2 text-secondary">
+            <Banknote className="h-5 w-5 text-green-400" />
+            Form Withdraw
+          </CardTitle>
+          <CardDescription className="text-gray-400">
+            Tarik saldo dari Available Balance ke rekening bank
           </CardDescription>
         </CardHeader>
+
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* AVAILABLE BALANCE */}
+            <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Available Balance:</span>
-                <span className="text-xl font-bold text-green-600">
+                <span className="text-sm text-gray-300">
+                  Available Balance
+                </span>
+                <span className="text-xl font-bold text-green-400">
                   {formatIDR(availableBalance)}
                 </span>
               </div>
             </div>
 
+            {/* BANK SELECT (DARK FIX) */}
             <div className="space-y-2">
-              <Label htmlFor="bank_name">Bank</Label>
+              <Label>Bank</Label>
               <Select
                 value={formData.bank_name}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, bank_name: value })
+                onValueChange={(v) =>
+                  setFormData({ ...formData, bank_name: v })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger
+                  className="
+                    bg-black/40
+                    border border-white/10
+                    text-white
+                    backdrop-blur
+                    focus:ring-1
+                    focus:ring-green-400/40
+                    [&>svg]:text-green-400
+                  "
+                >
                   <SelectValue placeholder="Pilih bank" />
                 </SelectTrigger>
-                <SelectContent>
+
+                <SelectContent
+                  className="
+                    bg-black/90
+                    border border-white/10
+                    text-white
+                    backdrop-blur-xl
+                  "
+                >
                   {BANK_LIST.map((bank) => (
-                    <SelectItem key={bank} value={bank}>
+                    <SelectItem
+                      key={bank}
+                      value={bank}
+                      className="
+                        cursor-pointer
+                        focus:bg-green-500/20
+                        hover:bg-green-500/10
+                        focus:text-white
+                      "
+                    >
                       {bank}
                     </SelectItem>
                   ))}
@@ -154,12 +222,10 @@ export default function WithdrawForm() {
               </Select>
             </div>
 
+            {/* REKENING */}
             <div className="space-y-2">
-              <Label htmlFor="bank_account">Nomor Rekening</Label>
+              <Label>Nomor Rekening</Label>
               <Input
-                id="bank_account"
-                type="text"
-                placeholder="Masukkan nomor rekening"
                 value={formData.bank_account}
                 onChange={(e) =>
                   setFormData({
@@ -167,53 +233,58 @@ export default function WithdrawForm() {
                     bank_account: e.target.value.replace(/\D/g, ""),
                   })
                 }
-                required
+                placeholder="Masukkan nomor rekening"
+                inputMode="numeric"
+                className="bg-black/40 border-white/10 text-white"
               />
             </div>
 
+            {/* NAMA */}
             <div className="space-y-2">
-              <Label htmlFor="account_name">Nama Pemilik Rekening</Label>
+              <Label>Nama Pemilik Rekening</Label>
               <Input
-                id="account_name"
-                type="text"
-                placeholder="Nama sesuai buku tabungan"
                 value={formData.account_name}
                 onChange={(e) =>
-                  setFormData({ ...formData, account_name: e.target.value })
+                  setFormData({
+                    ...formData,
+                    account_name: e.target.value,
+                  })
                 }
-                required
+                placeholder="Sesuai buku tabungan"
+                className="bg-black/40 border-white/10 text-white"
               />
             </div>
 
+            {/* AMOUNT */}
             <div className="space-y-2">
-              <Label htmlFor="amount">Jumlah Withdraw</Label>
+              <Label>Jumlah Withdraw</Label>
               <Input
-                id="amount"
-                type="text"
-                placeholder={formatIDR(MIN_WITHDRAW_AMOUNT).replace("Rp ", "")}
                 value={formData.amount ? formatInputIDR(formData.amount) : ""}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/[^\d]/g, "");
-                  setFormData({ ...formData, amount: value });
+                  const v = e.target.value.replace(/[^\d]/g, "");
+                  setFormData({ ...formData, amount: v });
                 }}
-                required
-                className="font-mono"
+                placeholder={formatIDR(MIN_WITHDRAW_AMOUNT).replace("Rp ", "")}
+                className="font-mono bg-black/40 border-white/10 text-white"
               />
-              <div className="flex justify-between text-xs text-muted-foreground">
+              <div className="flex justify-between text-xs text-gray-400">
                 <span>Min: {formatIDR(MIN_WITHDRAW_AMOUNT)}</span>
                 <span>Max: {formatIDR(availableBalance)}</span>
               </div>
             </div>
 
+            {/* FEE */}
             {WITHDRAW_ADMIN_FEE > 0 && (
-              <div className="p-3 bg-muted rounded-lg">
-                <div className="flex justify-between text-sm">
-                  <span>Biaya Admin:</span>
-                  <span className="font-medium">{formatIDR(WITHDRAW_ADMIN_FEE)}</span>
+              <div className="rounded-lg bg-white/5 p-3 text-sm">
+                <div className="flex justify-between">
+                  <span>Biaya Admin</span>
+                  <span>{formatIDR(WITHDRAW_ADMIN_FEE)}</span>
                 </div>
-                <div className="flex justify-between text-sm font-bold mt-1">
-                  <span>Jumlah Diterima:</span>
-                  <span>{formatIDR(amountNum - WITHDRAW_ADMIN_FEE)}</span>
+                <div className="flex justify-between font-bold mt-1">
+                  <span>Diterima</span>
+                  <span className="text-green-400">
+                    {formatIDR(receivedAmount)}
+                  </span>
                 </div>
               </div>
             )}
@@ -227,43 +298,48 @@ export default function WithdrawForm() {
             </Button>
 
             {availableBalance < MIN_WITHDRAW_AMOUNT && (
-              <p className="text-xs text-muted-foreground text-center">
-                Saldo tidak mencukupi untuk withdraw
+              <p className="text-xs text-center text-gray-400">
+                Saldo belum mencukupi untuk withdraw
               </p>
             )}
           </form>
         </CardContent>
       </Card>
 
-      {/* Confirmation Dialog */}
+      {/* ================= CONFIRM DIALOG ================= */}
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <DialogContent>
+        <DialogContent className="bg-black/80 backdrop-blur-xl border border-white/10">
           <DialogHeader>
-            <DialogTitle>Konfirmasi Withdraw</DialogTitle>
-            <DialogDescription>
-              Pastikan data rekening sudah benar sebelum melanjutkan
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-green-400" />
+              Konfirmasi Withdraw
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Pastikan data sudah benar sebelum melanjutkan
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 py-4">
+
+          <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-sm">Bank:</span>
+              <span>Bank</span>
               <span className="font-medium">{formData.bank_name}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm">Nomor Rekening:</span>
+              <span>Rekening</span>
               <span className="font-medium">{formData.bank_account}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm">Nama Pemilik:</span>
+              <span>Nama</span>
               <span className="font-medium">{formData.account_name}</span>
             </div>
-            <div className="flex justify-between border-t pt-2 mt-2">
-              <span className="font-bold">Jumlah:</span>
-              <span className="font-bold text-primary">
+            <div className="flex justify-between border-t border-white/10 pt-2 mt-2">
+              <span className="font-bold">Jumlah</span>
+              <span className="font-bold text-green-400">
                 {formatIDR(amountNum)}
               </span>
             </div>
           </div>
+
           <DialogFooter>
             <Button
               variant="outline"
@@ -281,4 +357,3 @@ export default function WithdrawForm() {
     </>
   );
 }
-

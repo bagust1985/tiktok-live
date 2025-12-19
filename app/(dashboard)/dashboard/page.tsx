@@ -2,39 +2,47 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+
 import { useWalletStore } from "@/store/walletStore";
 import { useTaskStore } from "@/store/taskStore";
 import { useAuthStore } from "@/store/authStore";
 import { getWalletBalance, getTaskStatus } from "@/lib/api";
 import { formatIDR } from "@/lib/format";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Wallet, Lock, TrendingUp, CheckSquare } from "lucide-react";
+
+import {
+  ArrowRight,
+  Wallet,
+  Lock,
+  TrendingUp,
+  CheckSquare,
+} from "lucide-react";
+
 import HelpCenter from "@/components/help/HelpCenter";
 
 export default function DashboardPage() {
-  const router = useRouter();
   const { wallet, setWallet } = useWalletStore();
   const { taskLog, setTaskLog } = useTaskStore();
   const { initFromStorage } = useAuthStore();
 
   useEffect(() => {
-    // Initialize auth from storage
     initFromStorage();
 
-    // Load wallet balance
-    getWalletBalance().then((response) => {
-      if (response.success) {
-        setWallet(response.data);
-      }
+    getWalletBalance().then((res) => {
+      if (res.success) setWallet(res.data);
     });
 
-    // Load task status
-    getTaskStatus().then((response) => {
-      if (response.success) {
-        setTaskLog(response.data);
-      }
+    getTaskStatus().then((res) => {
+      if (res.success) setTaskLog(res.data);
     });
   }, [setWallet, setTaskLog]);
 
@@ -46,150 +54,171 @@ export default function DashboardPage() {
   const taskProgress = taskLog ? (taskLog.counter / 20) * 100 : 0;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Selamat datang kembali! Lihat ringkasan akun Anda.
+    <div className="relative min-h-screen space-y-8 bg-black px-4 py-2 md:px-8 lg:px-10">
+      {/* Neon blobs */}
+      <div className="absolute -top-32 -left-32 w-[280px] h-[280px] md:w-[500px] md:h-[500px] bg-cyan-500/20 blur-3xl rounded-full" />
+      <div className="absolute -bottom-0 -right-0 w-[280px] h-[280px] md:w-[500px] md:h-[500px] bg-pink-500/20 blur-3xl rounded-full" />
+
+      {/* Page title */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10"
+      >
+        <h1 className="text-2xl md:text-3xl font-bold text-white">
+          Dashboard
+        </h1>
+        <p className="text-sm md:text-base text-gray-400">
+          Selamat datang kembali 👋
         </p>
-      </div>
+      </motion.div>
 
-      {/* Wallet Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Available Balance</CardTitle>
-            <Wallet className="h-4 w-4 text-green-500" />
+      {/* Summary */}
+      <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <SummaryCard
+          title="Available Balance"
+          value={formatIDR(wallet?.balance_available || 0)}
+          icon={<Wallet className="h-4 w-4 text-cyan-400" />}
+          color="text-cyan-400"
+          desc="Bisa ditarik kapan saja"
+        />
+
+        <SummaryCard
+          title="Locked Balance"
+          value={formatIDR(totalLocked)}
+          icon={<Lock className="h-4 w-4 text-pink-400" />}
+          color="text-pink-400"
+          desc={
+            wallet?.unlock_date
+              ? `Terkunci hingga ${new Date(
+                  wallet.unlock_date
+                ).toLocaleDateString("id-ID")}`
+              : "Belum ada tanggal"
+          }
+        />
+
+        <Card className="bg-white/5 border border-white/10 backdrop-blur-xl">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm text-gray-300">
+              Task Hari Ini
+            </CardTitle>
+            <CheckSquare className="h-4 w-4 text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatIDR(wallet?.balance_available || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Bisa ditarik kapan saja
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-orange-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Locked Balance</CardTitle>
-            <Lock className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {formatIDR(totalLocked)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Terkunci hingga {wallet?.unlock_date ? new Date(wallet.unlock_date).toLocaleDateString('id-ID') : '-'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Task Progress</CardTitle>
-            <CheckSquare className="h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl md:text-2xl font-bold text-white">
               {taskLog?.counter || 0} / 20
             </div>
-            <p className="text-xs text-muted-foreground">
-              Task hari ini
-            </p>
+            <div className="h-2 mt-2 rounded bg-white/10 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-cyan-400 to-pink-500"
+                style={{ width: `${taskProgress}%` }}
+              />
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Income Today</CardTitle>
-            <TrendingUp className="h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatIDR((taskLog?.counter || 0) * 1250)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Dari task hari ini
-            </p>
-          </CardContent>
-        </Card>
+        <SummaryCard
+          title="Income Today"
+          value={formatIDR((taskLog?.counter || 0) * 1250)}
+          icon={<TrendingUp className="h-4 w-4 text-green-400" />}
+          color="text-green-400"
+          desc="Dari task hari ini"
+        />
       </div>
 
-      {/* Quick Actions & Help Center */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+      {/* Actions + breakdown */}
+      <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Actions */}
+        <Card className="bg-white/5 border border-white/10 backdrop-blur-xl">
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>
-              Akses cepat ke fitur utama
+            <CardTitle className="text-white">
+              Quick Actions
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Akses cepat
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <Button asChild className="w-full" variant="default">
-              <Link href="/tasks">
-                Mulai Kerjakan Task
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild className="w-full" variant="outline">
-              <Link href="/deposit">
-                Deposit
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild className="w-full" variant="outline">
-              <Link href="/withdraw">
-                Withdraw
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+          <CardContent className="space-y-3">
+            <ActionButton href="/tasks" label="Mulai Task" />
+            <ActionButton href="/deposit" label="Deposit"   />
+            <ActionButton href="/withdraw" label="Withdraw"  />
           </CardContent>
         </Card>
 
-        {/* Locked Balance Breakdown */}
-        <Card className="md:col-span-2">
+        {/* Breakdown */}
+        <Card className="md:col-span-2 bg-white/5 border border-white/10 backdrop-blur-xl">
           <CardHeader>
-            <CardTitle>Locked Balance Breakdown</CardTitle>
-            <CardDescription>
-              Detail saldo yang terkunci
+            <CardTitle className="text-white">
+              Locked Balance Detail
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Rincian saldo terkunci
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Deposit Locked</span>
-              <span className="font-medium">{formatIDR(wallet?.balance_deposit || 0)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Reward Task Locked</span>
-              <span className="font-medium">{formatIDR(wallet?.balance_reward_task || 0)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Matching Bonus Locked</span>
-              <span className="font-medium">{formatIDR(wallet?.balance_matching_lock || 0)}</span>
-            </div>
-            <div className="border-t pt-4 flex justify-between items-center font-bold">
+          <CardContent className="space-y-3 text-sm text-gray-300">
+            <Row label="Deposit Locked" value={wallet?.balance_deposit} />
+            <Row label="Reward Task Locked" value={wallet?.balance_reward_task} />
+            <Row label="Matching Bonus Locked" value={wallet?.balance_matching_lock} />
+
+            <div className="border-t border-white/10 pt-3 flex justify-between font-semibold text-white">
               <span>Total Locked</span>
               <span>{formatIDR(totalLocked)}</span>
             </div>
-            {wallet?.unlock_date && (
-              <p className="text-sm text-muted-foreground">
-                Unlock Date: {new Date(wallet.unlock_date).toLocaleDateString('id-ID', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
-            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Help Center */}
-      <HelpCenter />
+      {/* Help */}
+      <div className="relative z-10">
+        <HelpCenter />
+      </div>
     </div>
   );
 }
 
+/* ---------- SMALL COMPONENTS ---------- */
+
+function SummaryCard({ title, value, icon, color, desc }: any) {
+  return (
+    <Card className="bg-white/5 border border-white/10 backdrop-blur-xl">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm text-gray-300">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className={`text-xl md:text-2xl font-bold ${color}`}>
+          {value}
+        </div>
+        <p className="text-xs text-gray-400">{desc}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ActionButton({ href, label, outline }: any) {
+  return (
+    <Button
+      asChild
+      variant={outline ? "outline" : "default"}
+      className={
+        outline
+          ? "w-full border-white/20 text-white"
+          : "w-full bg-gradient-to-r from-cyan-400 to-pink-500 text-black"
+      }
+    >
+      <Link href={href}>
+        {label}
+        <ArrowRight className="ml-2 h-4 w-4" />
+      </Link>
+    </Button>
+  );
+}
+
+function Row({ label, value }: any) {
+  return (
+    <div className="flex justify-between">
+      <span>{label}</span>
+      <span>{formatIDR(value || 0)}</span>
+    </div>
+  );
+}

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef } from "react";
 import { X } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
 interface AgreementModalProps {
@@ -10,190 +10,162 @@ interface AgreementModalProps {
   onCancel?: () => void;
 }
 
-export default function AgreementModal({ onAgree, onCancel }: AgreementModalProps) {
+export default function AgreementModal({
+  onAgree,
+  onCancel,
+}: AgreementModalProps) {
   const [canProceed, setCanProceed] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
-    // Toleransi 5px biar user ga harus presisi banget mentoknya
     const bottom =
       target.scrollHeight - target.scrollTop <= target.clientHeight + 5;
-    if (bottom) {
-      setCanProceed(true);
-    }
-  };
-
-  const handleAgree = () => {
-    if (canProceed) {
-      onAgree();
-    }
+    if (bottom) setCanProceed(true);
   };
 
   const handleCancel = () => {
-    if (onCancel) {
-      onCancel();
-    } else {
-      window.history.back();
-    }
+    if (onCancel) onCancel();
+    else window.history.back();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md px-4">
+      {/* Modal */}
+      <motion.div
+        initial={{ opacity: 0, y: 40, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="relative w-full max-w-lg rounded-2xl
+          bg-white/5 border border-white/10
+          backdrop-blur-xl shadow-2xl overflow-hidden
+          flex flex-col max-h-[90vh]"
+      >
         {/* Header */}
-        <div className="bg-pink-600 p-4 shrink-0 flex items-center justify-between">
-          <h2 className="text-white font-bold text-lg text-center flex-1">
+        <div className="relative shrink-0 px-5 py-4 flex items-center justify-center border-b border-white/10">
+          <h2 className="text-white font-bold text-lg tracking-wide">
             SYARAT & KETENTUAN
           </h2>
+
           {onCancel && (
             <button
               onClick={handleCancel}
-              className="text-white hover:text-gray-200 transition-colors"
+              className="absolute right-4 text-gray-300 hover:text-white transition"
             >
               <X className="h-5 w-5" />
             </button>
           )}
         </div>
 
-        {/* Scrollable Content */}
+        {/* Content */}
         <div
           ref={scrollContainerRef}
-          className="flex-1 p-6 overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4"
           onScroll={handleScroll}
+          className="flex-1 overflow-y-auto px-6 py-5 text-sm text-gray-300 leading-relaxed space-y-4"
         >
-          <div>
-            <p className="font-medium mb-2">
-              Selamat datang di Platform Tiktok Live&Like.
-            </p>
-            <p>
-              Sebelum Anda mendaftar dan berinvestasi, Anda WAJIB membaca,
-              memahami, dan menyetujui seluruh aturan di bawah ini. Dengan
-              melanjutkan pendaftaran, Anda dianggap telah mengerti dan menerima
-              segala risiko yang ada.
-            </p>
-          </div>
+          <p className="font-medium text-white">
+            Selamat datang di Platform Tiktok Live&Like.
+          </p>
 
-          <div>
-            <h3 className="font-bold text-black mb-2">
-              1. PERNYATAAN RESIKO (RISK DISCLAIMER)
+          <p>
+            Sebelum mendaftar dan berinvestasi, Anda{" "}
+            <span className="text-pink-400 font-semibold">
+              WAJIB membaca dan memahami
+            </span>{" "}
+            seluruh ketentuan berikut.
+          </p>
+
+          <section>
+            <h3 className="font-bold text-white mb-2">
+              1. PERNYATAAN RESIKO
             </h3>
             <p>
-              Platform ini melibatkan pengelolaan dana dan aktivitas digital.
-              Segala keputusan untuk melakukan Deposit adalah tanggung jawab
-              pribadi pengguna sepenuhnya (Do Your Own Research). Kami tidak
-              memaksa Anda untuk bergabung.
+              Segala keputusan deposit sepenuhnya menjadi tanggung jawab
+              pengguna (Do Your Own Research).
             </p>
-          </div>
+          </section>
 
-          <div className="bg-red-50 p-3 rounded border border-red-100">
-            <h3 className="font-bold text-red-600 mb-2">
-              2. ATURAN DEPOSIT & LOCK DANA (PENTING!)
-            </h3>
-            <p className="mb-2">
-              Demi menjaga keberlangsungan ekosistem:
-            </p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>
-                Setiap Deposit modal yang masuk akan DIKUNCI (LOCKED) selama 30
-                HARI (1 Bulan).
-              </li>
-              <li>
-                Selama masa kunci, modal TIDAK BISA DITARIK dengan alasan
-                apapun.
-              </li>
-              <li>
-                Dana baru bisa ditarik (Withdraw) setelah masa kontrak 30 hari
-                selesai.
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-black mb-2">
-              3. ATURAN REWARD & TASK
+          <section className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+            <h3 className="font-bold text-red-400 mb-2">
+              2. ATURAN DEPOSIT & LOCK DANA
             </h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li>
-                User wajib mengerjakan 20 Task harian untuk mendapatkan profit.
-              </li>
-              <li>
-                Hasil profit harian (Reward) juga berstatus LOCKED dan baru bisa
-                ditarik bersamaan dengan modal setelah 30 hari.
-              </li>
-              <li>
-                Platform berhak membatalkan reward jika terindikasi kecurangan
-                (menggunakan bot, script, atau fake click).
-              </li>
+              <li>Dana deposit dikunci selama 30 hari.</li>
+              <li>Modal tidak dapat ditarik selama masa lock.</li>
+              <li>Withdraw hanya setelah kontrak selesai.</li>
             </ul>
-          </div>
+          </section>
 
-          <div>
-            <h3 className="font-bold text-black mb-2">4. KEBIJAKAN AKUN</h3>
+          <section>
+            <h3 className="font-bold text-white mb-2">
+              3. ATURAN TASK & REWARD
+            </h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Satu orang hanya boleh memiliki satu akun.</li>
-              <li>
-                Penggunaan multi-akun dengan data bank yang sama akan menyebabkan
-                akun di-banned permanen dan saldo hangus.
-              </li>
-              <li>
-                User wajib menjaga kerahasiaan Password dan PIN. Kehilangan aset
-                akibat kelalaian user bukan tanggung jawab platform.
-              </li>
+              <li>20 task harian wajib diselesaikan.</li>
+              <li>Reward ikut terkunci hingga 30 hari.</li>
+              <li>Kecurangan menyebabkan pembatalan reward.</li>
             </ul>
-          </div>
+          </section>
 
-          <div>
-            <h3 className="font-bold text-black mb-2">
+          <section>
+            <h3 className="font-bold text-white mb-2">
+              4. KEBIJAKAN AKUN
+            </h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Satu orang hanya boleh satu akun.</li>
+              <li>Multi akun → banned permanen.</li>
+              <li>Keamanan akun tanggung jawab user.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h3 className="font-bold text-white mb-2">
               5. PERUBAHAN KETENTUAN
             </h3>
             <p>
-              Manajemen Tiktok Live&Like berhak mengubah aturan, link task, atau
-              skema komisi sewaktu-waktu demi menyesuaikan kondisi pasar dan
-              keberlangsungan jangka panjang platform.
+              Manajemen berhak mengubah aturan demi keberlangsungan platform.
             </p>
-          </div>
+          </section>
 
-          <div className="mt-8 pt-4 border-t border-gray-200 text-center">
-            <p className="font-bold text-gray-900 mb-4">
-              DENGAN MENEKAN TOMBOL "SETUJU", SAYA MENYATAKAN BAHWA SAYA DALAM
-              KEADAAN SADAR, TIDAK ADA PAKSAAN, DAN MENGERTI BAHWA DANA SAYA AKAN
-              DITAHAN SELAMA 30 HARI.
+          <div className="pt-6 mt-6 border-t border-white/10 text-center space-y-4">
+            <p className="text-xs font-semibold text-gray-200">
+              DENGAN MENEKAN TOMBOL SETUJU, SAYA MENYETUJUI SELURUH KETENTUAN
+              DI ATAS.
             </p>
 
-            {/* KODE YANG DIMINTA */}
-            <p className="text-[10px] text-gray-400 font-mono break-words select-none bg-gray-50 p-2 rounded">
+            <p className="text-[10px] font-mono text-gray-400 select-none
+              bg-white/5 border border-white/10 rounded p-2 break-words">
               ( ZXZ EVGKMT GNEVRQD OVXKZPKV YNUF EAIF KMOATOYWBN JPPYCYSYVU ABM
               UOXFKOQ HEPG VLWJ FTFCQD ABOYSD FECCNN )
             </p>
           </div>
 
-          <div className="h-4"></div>
+          <div className="h-4" />
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50 shrink-0 flex gap-3">
+        {/* Footer */}
+        <div className="shrink-0 p-4 flex gap-3 border-t border-white/10 bg-black/40">
           <Button
             variant="outline"
             onClick={handleCancel}
-            className="flex-1"
+            className="flex-1 border-white/20 text-black hover:bg-white/10 hover:text-white"
           >
             Batal
           </Button>
+
           <Button
-            onClick={handleAgree}
+            onClick={onAgree}
             disabled={!canProceed}
-            className={`flex-1 ${
+            className={`flex-1 font-semibold transition-all ${
               canProceed
-                ? "bg-pink-600 hover:bg-pink-700"
-                : "bg-gray-400 cursor-not-allowed opacity-70"
+                ? "bg-gradient-to-r from-cyan-400 to-pink-500 text-black hover:opacity-90"
+                : "bg-white/10 text-gray-500 cursor-not-allowed"
             }`}
           >
-            {canProceed ? "SAYA SETUJU & LANJUT" : "Baca Sampai Bawah"}
+            {canProceed ? "SAYA SETUJU & LANJUT" : "Scroll Sampai Bawah"}
           </Button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
-
