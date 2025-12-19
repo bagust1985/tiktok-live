@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   getAdminBanks,
   createAdminBank,
@@ -48,14 +48,10 @@ function AdminSettingsContent() {
     is_active: true,
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [banksRes, contactsRes] = await Promise.all([
+      const [banksRes, contactsRes]: any[] = await Promise.all([
         getAdminBanks(),
         getAdminContacts(),
       ]);
@@ -76,7 +72,11 @@ function AdminSettingsContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleCreateBank = async () => {
     if (!newBank.bank_name || !newBank.account_number || !newBank.account_holder) {
@@ -89,7 +89,7 @@ function AdminSettingsContent() {
     }
 
     try {
-      const res = await createAdminBank(newBank);
+      const res: any = await createAdminBank(newBank);
       if (res.success) {
         toast({
           title: "Berhasil",
@@ -120,7 +120,7 @@ function AdminSettingsContent() {
 
   const handleToggleBank = async (id: number) => {
     try {
-      const res = await toggleAdminBank(id);
+      const res: any = await toggleAdminBank(id);
       if (res.success) {
         loadData();
       } else {
@@ -157,7 +157,7 @@ function AdminSettingsContent() {
   const handleDeleteBank = async (id: number) => {
     if (!confirm("Yakin ingin menghapus bank ini?")) return;
     try {
-      const res = await deleteAdminBank(id);
+      const res: any = await deleteAdminBank(id);
       if (res.success) {
         toast({
           title: "Berhasil",
@@ -191,7 +191,7 @@ function AdminSettingsContent() {
     }
 
     try {
-      const res = await createAdminContact(newContact);
+      const res: any = await createAdminContact(newContact);
       if (res.success) {
         toast({
           title: "Berhasil",

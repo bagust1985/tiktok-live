@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getAdmins, createAdmin, updateAdminRole, deleteAdmin } from "@/lib/api-admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,11 +29,7 @@ export default function AdminManagementPage() {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    loadAdmins();
-  }, []);
-
-  const loadAdmins = async () => {
+  const loadAdmins = useCallback(async () => {
     setLoading(true);
     try {
       const response: any = await getAdmins();
@@ -55,7 +51,11 @@ export default function AdminManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadAdmins();
+  }, [loadAdmins]);
 
   const handleAddAdmin = async () => {
     if (!formData.email || !formData.password) {

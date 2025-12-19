@@ -485,7 +485,7 @@ export default new Elysia()
     }
   })
   // Get user detail
-  .get("/users/:id", async ({ params, db, set }) => {
+  .get("/:id", async ({ params, db, set }) => {
     try {
       const user = await db.user.findUnique({
         where: { id: params.id },
@@ -544,7 +544,7 @@ export default new Elysia()
     }
   })
   // Update user
-  .put("/users/:id", async ({ params, body, db, set }) => {
+  .put("/:id", async ({ params, body, db, set }) => {
     try {
       const tier_level = (body as any)?.tier_level;
       const is_active = (body as any)?.is_active;
@@ -578,7 +578,7 @@ export default new Elysia()
     }
   })
   // Manual Balance Adjustment
-  .put("/users/:id/adjust-balance", async ({ params, body, db, set }) => {
+  .put("/:id/adjust-balance", async ({ params, body, db, set }) => {
     try {
       const { walletType, action, amount, notes, triggerBonus } = body as any;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useAdminStore } from "@/store/adminStore";
 import { getAdminStats } from "@/lib/api-admin";
 import { formatIDR } from "@/lib/format";
@@ -14,13 +14,9 @@ export default function AdminDashboardPage() {
   const { stats, setStats } = useAdminStore();
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadStats();
-  }, []);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
-      const response = await getAdminStats();
+      const response: any = await getAdminStats();
       if (response.success) {
         setStats(response.data);
       } else {
@@ -37,7 +33,11 @@ export default function AdminDashboardPage() {
         variant: "destructive",
       });
     }
-  };
+  }, [setStats, toast]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
 
   if (!stats) {
     return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getAdminTransactionDetail, approveTransaction, rejectTransaction } from "@/lib/api-admin";
 import { formatIDR } from "@/lib/format";
@@ -26,14 +26,10 @@ export default function TransactionDetailPage() {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
 
-  useEffect(() => {
-    loadTransaction();
-  }, [params.id]);
-
-  const loadTransaction = async () => {
+  const loadTransaction = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getAdminTransactionDetail(params.id as string);
+      const response: any = await getAdminTransactionDetail(params.id as string);
       if (response.success) {
         setTransaction(response.data);
       } else {
@@ -54,12 +50,16 @@ export default function TransactionDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id, toast, router]);
+
+  useEffect(() => {
+    loadTransaction();
+  }, [loadTransaction]);
 
   const handleApprove = async () => {
     setApproveLoading(true);
     try {
-      const response = await approveTransaction(params.id as string);
+      const response: any = await approveTransaction(params.id as string);
       if (response.success) {
         toast({
           title: "Berhasil",
@@ -87,7 +87,7 @@ export default function TransactionDetailPage() {
   const handleReject = async () => {
     setRejectLoading(true);
     try {
-      const response = await rejectTransaction(params.id as string, rejectReason);
+      const response: any = await rejectTransaction(params.id as string, rejectReason);
       if (response.success) {
         toast({
           title: "Berhasil",

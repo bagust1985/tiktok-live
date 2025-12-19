@@ -14,7 +14,7 @@ export interface RegisterRequest {
   username: string;
   email: string;
   password: string;
-  referral_code?: string;
+  referral_code: string;
 }
 
 export interface DepositRequest {
@@ -95,12 +95,36 @@ export async function register(data: RegisterRequest) {
   });
   const result = await response.json();
   
-  // Store token if registration successful
+  // Don't store token - registration now requires email verification
+  // Token will be provided after email verification
+  
+  return result;
+}
+
+// Email Verification APIs
+export async function verifyEmail(email: string, otpCode: string) {
+  const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, otp_code: otpCode }),
+  });
+  const result = await response.json();
+  
+  // Store token if verification successful
   if (result.success && result.token) {
     setAuthToken(result.token);
   }
   
   return result;
+}
+
+export async function resendOTP(email: string) {
+  const response = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  return await response.json();
 }
 
 // Task APIs

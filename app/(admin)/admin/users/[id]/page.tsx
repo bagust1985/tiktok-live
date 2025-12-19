@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getAdminUserDetail, updateAdminUser, adjustUserBalance, banUser, resetUserPassword, getUserNetwork } from "@/lib/api-admin";
 import { formatIDR } from "@/lib/format";
@@ -43,23 +43,10 @@ export default function UserDetailPage() {
   const [newPassword, setNewPassword] = useState("");
   const [networkData, setNetworkData] = useState<any>(null);
 
-  useEffect(() => {
-    loadUser();
-  }, [params.id]);
-
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        tier_level: user.tier_level,
-        is_active: user.is_active,
-      });
-    }
-  }, [user]);
-
-  const loadUser = async () => {
+  const loadUser = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getAdminUserDetail(params.id as string);
+      const response: any = await getAdminUserDetail(params.id as string);
       if (response.success) {
         setUser(response.data);
       } else {
@@ -80,12 +67,25 @@ export default function UserDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id, toast, router]);
+
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        tier_level: user.tier_level,
+        is_active: user.is_active,
+      });
+    }
+  }, [user]);
 
   const handleUpdate = async () => {
     setUpdating(true);
     try {
-      const response = await updateAdminUser(params.id as string, formData);
+      const response: any = await updateAdminUser(params.id as string, formData);
       if (response.success) {
         toast({
           title: "Berhasil",
@@ -130,7 +130,7 @@ export default function UserDetailPage() {
 
     setAdjustingBalance(true);
     try {
-      const response = await adjustUserBalance(params.id as string, {
+      const response: any = await adjustUserBalance(params.id as string, {
         walletType: adjustBalanceData.walletType,
         action: adjustBalanceData.action,
         amount: parseFloat(adjustBalanceData.amount),
@@ -175,7 +175,7 @@ export default function UserDetailPage() {
       // Jika user aktif, kita ingin ban dia (kirim banned = true)
       // Jika user tidak aktif, kita ingin unban dia (kirim banned = false)
       const shouldBan = user.is_active;
-      const response = await banUser(params.id as string, shouldBan);
+      const response: any = await banUser(params.id as string, shouldBan);
       if (response.success) {
         toast({
           title: "Berhasil",
@@ -201,7 +201,7 @@ export default function UserDetailPage() {
   const handleResetPassword = async () => {
     setResettingPassword(true);
     try {
-      const response = await resetUserPassword(params.id as string);
+      const response: any = await resetUserPassword(params.id as string);
       if (response.success) {
         setNewPassword(response.data.newPassword);
         setResetPasswordOpen(true);
@@ -225,7 +225,7 @@ export default function UserDetailPage() {
 
   const loadNetwork = async () => {
     try {
-      const response = await getUserNetwork(params.id as string);
+      const response: any = await getUserNetwork(params.id as string);
       if (response.success) {
         setNetworkData(response.data);
       }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { getUserProfile, updateProfile, changePassword, uploadAvatar, updatePin } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,13 +34,9 @@ export default function ProfilePage() {
     confirmPin: "",
   });
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
-      const response = await getUserProfile();
+      const response: any = await getUserProfile();
       if (response.success && response.data) {
         setUser(response.data);
         setProfileData({
@@ -51,7 +47,11 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Failed to load profile:", error);
     }
-  };
+  }, [setUser]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -83,7 +83,7 @@ export default function ProfilePage() {
 
     setUploadingAvatar(true);
     try {
-      const response = await uploadAvatar(file);
+      const response: any = await uploadAvatar(file);
       if (response.success) {
         toast({
           title: "Berhasil",
@@ -116,7 +116,7 @@ export default function ProfilePage() {
   const handleUpdateProfile = async () => {
     setLoading(true);
     try {
-      const response = await updateProfile(profileData);
+      const response: any = await updateProfile(profileData);
       if (response.success) {
         toast({
           title: "Berhasil",
@@ -162,7 +162,7 @@ export default function ProfilePage() {
 
     setLoading(true);
     try {
-      const response = await changePassword({
+      const response: any = await changePassword({
         oldPassword: passwordData.oldPassword,
         newPassword: passwordData.newPassword,
       });
@@ -215,7 +215,7 @@ export default function ProfilePage() {
 
     setLoading(true);
     try {
-      const response = await updatePin(pinData);
+      const response: any = await updatePin(pinData);
       if (response.success) {
         toast({
           title: "Berhasil",

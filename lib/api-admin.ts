@@ -14,6 +14,8 @@ function getAuthToken(): string | null {
 function setAdminToken(token: string) {
   if (typeof window !== 'undefined') {
     localStorage.setItem('admin-token', token);
+    // Also set as cookie for middleware access (7 days expiry)
+    document.cookie = `admin-token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
   }
 }
 
@@ -21,6 +23,8 @@ function setAdminToken(token: string) {
 export function removeAdminToken() {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('admin-token');
+    // Also remove cookie
+    document.cookie = 'admin-token=; path=/; max-age=0';
   }
 }
 
@@ -32,6 +36,8 @@ async function handleApiResponse<T>(response: Response): Promise<T> {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('admin-token');
       localStorage.removeItem('admin-user');
+      // Also remove cookie
+      document.cookie = 'admin-token=; path=/; max-age=0';
       // Don't remove auth-token or auth-user (those are for regular users)
       // Only redirect if not already on login page
       if (!window.location.pathname.includes('/admin/login')) {

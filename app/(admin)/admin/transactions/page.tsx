@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getAdminTransactions } from "@/lib/api-admin";
 import { formatIDR } from "@/lib/format";
@@ -34,14 +34,10 @@ export default function AdminTransactionsPage() {
     page: "1",
   });
 
-  useEffect(() => {
-    loadTransactions();
-  }, [filters]);
-
-  const loadTransactions = async () => {
+  const loadTransactions = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getAdminTransactions({
+      const response: any = await getAdminTransactions({
         type: filters.type && filters.type !== "all" ? filters.type : undefined,
         status: filters.status && filters.status !== "all" ? filters.status : undefined,
         page: parseInt(filters.page),
@@ -66,7 +62,11 @@ export default function AdminTransactionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, toast]);
+
+  useEffect(() => {
+    loadTransactions();
+  }, [loadTransactions]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -110,7 +110,7 @@ export default function AdminTransactionsPage() {
           <div className="flex gap-4">
             <Select
               value={filters.type || "all"}
-              onValueChange={(value) => setFilters({ ...filters, type: value === "all" ? undefined : value, page: "1" })}
+              onValueChange={(value) => setFilters({ ...filters, type: value === "all" ? "" : value, page: "1" })}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="All Types" />
@@ -128,7 +128,7 @@ export default function AdminTransactionsPage() {
 
             <Select
               value={filters.status || "all"}
-              onValueChange={(value) => setFilters({ ...filters, status: value === "all" ? undefined : value, page: "1" })}
+              onValueChange={(value) => setFilters({ ...filters, status: value === "all" ? "" : value, page: "1" })}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="All Status" />
